@@ -53440,6 +53440,9 @@ for (let k = 0; k < 10; k++) {
   const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
   const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
   const sideSign = k % 2 === 0 ? 1 : -1;
+  // Ne PAS mettre de tribune côté droit (sideSign=-1) dans la zone des stands
+  let dStart = frac; dStart = Math.min(dStart, 1 - dStart);
+  if (sideSign === -1 && dStart < 0.12) continue; // zone pit lane à droite
   const tx = p.x + side.x * sideSign * (ROAD_HALF + 8);
   const tz = p.z + side.z * sideSign * (ROAD_HALF + 8);
   if (isFarFromTrack(tx, tz, ROAD_HALF + 4)) {
@@ -53587,7 +53590,7 @@ const pitBoxes = []; // { pos: Vector3, heading, takenBy: player|null }
     pitBoxes.push({ pos: boxCenter.clone(), heading, takenBy: null });
   }
 
-  // --- GRAND PANNEAU "ARRÊT AU STAND" au-dessus des boxes ---
+  // --- GRAND PANNEAU "ARRÊT AU STAND" centré au-dessus des boxes, face à la piste ---
   {
     const c = document.createElement('canvas'); c.width = 1024; c.height = 128;
     const ctx = c.getContext('2d');
@@ -53600,25 +53603,21 @@ const pitBoxes = []; // { pos: Vector3, heading, takenBy: player|null }
       new THREE.BoxGeometry(30, 3.75, 0.5),
       new THREE.MeshStandardMaterial({ map: tex, emissive: 0x441111, emissiveIntensity: 0.3 })
     );
-    // portique au-dessus du milieu des boxes
-    const fracMid = 0.975 + 0.0275;
-    const siMid = fracMid % 1;
-    const pMid = samples[Math.floor(siMid * SAMPLES) % SAMPLES];
-    const tMid = curve.getTangentAt(siMid);
+    // Centré sur la ligne de départ (frac 0), au-dessus des boxes côté droit
+    const pMid = samples[0];
+    const tMid = curve.getTangentAt(0);
     const sMid = new THREE.Vector3(-tMid.z, 0, tMid.x).normalize();
     banner.position.copy(pMid).addScaledVector(sMid, -(ROAD_HALF + 7));
     banner.position.y = 6;
-    banner.rotation.y = Math.atan2(-tMid.z, tMid.x) + Math.PI;
+    banner.rotation.y = Math.atan2(tMid.x, tMid.z); // face à la piste
     banner.castShadow = true;
     scene.add(banner);
-    // poteaux du portique
+    // poteaux du portique de chaque côté de l'allée
     const postG = new THREE.CylinderGeometry(0.3, 0.3, 6, 8);
     const postMat = new THREE.MeshStandardMaterial({ color: 0xd8342c, roughness: 0.5 });
-    const postOffset = 14;
-    [-1, 1].forEach(s => {
+    [-14, 14].forEach(s => {
       const post = new THREE.Mesh(postG, postMat);
-      const perp = new THREE.Vector3(Math.cos(banner.rotation.y), 0, -Math.sin(banner.rotation.y));
-      post.position.copy(banner.position).addScaledVector(perp, s * postOffset);
+      post.position.copy(pMid).addScaledVector(sMid, -(ROAD_HALF + 7) + s);
       post.position.y = 3;
       scene.add(post);
     });
