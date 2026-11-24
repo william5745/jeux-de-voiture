@@ -1441,11 +1441,13 @@ function updatePlayer(p, dt) {
     }
   }
 
-  // Ramassage des caisses bonus
-  for (const b of itemBoxes) {
-    if (!b.taken && p.pos.distanceTo(b.mesh.position) < 2.4 && !p.item) {
-      b.taken = true; b.respawn = 5;
-      p.item = ITEMS[Math.floor(Math.random() * ITEMS.length)];
+  // Ramassage des caisses bonus (désactivé pendant la qualification)
+  if (raceState !== 'qualif') {
+    for (const b of itemBoxes) {
+      if (!b.taken && p.pos.distanceTo(b.mesh.position) < 2.4 && !p.item) {
+        b.taken = true; b.respawn = 5;
+        p.item = ITEMS[Math.floor(Math.random() * ITEMS.length)];
+      }
     }
   }
 
@@ -1659,6 +1661,8 @@ function animate() {
 
   // Caisses "?" : rotation + réapparition
   for (const b of itemBoxes) {
+    // Caisses cachées pendant la qualification
+    if (raceState === 'qualif') { b.mesh.visible = false; continue; }
     if (b.taken) {
       b.respawn -= dt;
       b.mesh.visible = false;
