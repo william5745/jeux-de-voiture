@@ -126,7 +126,8 @@
 </script>
 <script type="module">
 import * as THREE from 'three';
-import { library } from './objets.js';
+window.__THREE = THREE; // fournir THREE aux modules externes (objets.js)
+const { library } = await import('./objets.js');
 
 const viewer = document.getElementById('viewer');
 const renderer = new THREE.WebGLRenderer({ antialias: true });

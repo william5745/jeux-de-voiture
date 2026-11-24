@@ -1,5 +1,7 @@
 // Catalogue d'objets 3D partagé entre bibliotheque.html et editeur.html
-// (source unique : ne pas dupliquer dans les pages)
+// THREE est fourni globalement par la page (window.__THREE) pour éviter les problèmes d'importmap imbriqués
+const THREE = window.__THREE;
+
 export const library = {
   kart: {
     icon: '🏎️', name: 'Kart de course',
