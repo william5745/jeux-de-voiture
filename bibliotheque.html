@@ -59,14 +59,21 @@
       <div class="obj-item" data-id="flower"><span class="icon">🌸</span><span class="name">Fleur</span></div>
       <div class="cat-title">Circuit</div>
       <div class="obj-item" data-id="barrier"><span class="icon">🚧</span><span class="name">Barrière</span></div>
+      <div class="obj-item" data-id="wall"><span class="icon">🧱</span><span class="name">Mur de sécurité</span></div>
       <div class="obj-item" data-id="itembox"><span class="icon">❓</span><span class="name">Boîte objet</span></div>
       <div class="obj-item" data-id="boost"><span class="icon">⚡</span><span class="name">Zone de boost</span></div>
       <div class="obj-item" data-id="arch"><span class="icon">🎪</span><span class="name">Arche de départ</span></div>
+      <div class="obj-item" data-id="sign"><span class="icon">🪧</span><span class="name">Panneau publicitaire</span></div>
+      <div class="cat-title">Objets</div>
+      <div class="obj-item" data-id="shell"><span class="icon">🐢</span><span class="name">Carapace</span></div>
+      <div class="obj-item" data-id="mushroom"><span class="icon">🍄</span><span class="name">Champignon</span></div>
+      <div class="obj-item" data-id="star"><span class="icon">⭐</span><span class="name">Étoile</span></div>
       <div class="cat-title">Décor</div>
       <div class="obj-item" data-id="cloud"><span class="icon">☁️</span><span class="name">Nuage</span></div>
       <div class="obj-item" data-id="mountain"><span class="icon">⛰️</span><span class="name">Montagne</span></div>
       <div class="obj-item" data-id="stand"><span class="icon">👥</span><span class="name">Tribune</span></div>
       <div class="obj-item" data-id="aco"><span class="icon">🏢</span><span class="name">Tour ACO</span></div>
+      <div class="obj-item" data-id="pit"><span class="icon">🏗️</span><span class="name">Bâtiment des stands</span></div>
     </div>
   </div>
   <div id="viewer">
@@ -332,6 +339,122 @@ const library = {
       [-1, 1].forEach(s => { const post = new THREE.Mesh(postG, mat); post.position.set(s * (p.width / 2), 4.5, 0); g.add(post); });
       const banner = new THREE.Mesh(new THREE.BoxGeometry(p.width + 1.2, 1.6, 0.4), mat);
       banner.position.y = 8.5; g.add(banner);
+      return g;
+    }
+  },
+  wall: {
+    icon: '🧱', name: 'Mur de sécurité',
+    params: { color: '#e8e8e8', height: 3, length: 10, scale: 1 },
+    build: p => {
+      const g = new THREE.Mesh(
+        new THREE.BoxGeometry(p.length, p.height, 0.5),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.9 })
+      );
+      g.position.y = p.height / 2;
+      g.scale.setScalar(p.scale);
+      return g;
+    }
+  },
+  sign: {
+    icon: '🪧', name: 'Panneau publicitaire',
+    params: { text: '24 HEURES DU MANS', bg: '#b3121f', fg: '#ffffff', width: 11, scale: 1 },
+    build: p => {
+      const g = new THREE.Group();
+      const c = document.createElement('canvas'); c.width = 512; c.height = 96;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = p.bg; ctx.fillRect(0, 0, 512, 96);
+      ctx.fillStyle = p.fg; ctx.font = 'bold 42px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(p.text, 256, 52);
+      const tex = new THREE.CanvasTexture(c);
+      const panel = new THREE.Mesh(
+        new THREE.PlaneGeometry(p.width, 2),
+        new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, side: THREE.DoubleSide })
+      );
+      panel.position.y = 5.6;
+      const postG = new THREE.CylinderGeometry(0.15, 0.15, 5.6, 8);
+      const postMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
+      [-p.width/2 + 0.5, p.width/2 - 0.5].forEach(x => {
+        const post = new THREE.Mesh(postG, postMat);
+        post.position.set(x, 2.8, -0.2); g.add(post);
+      });
+      g.add(panel);
+      g.scale.setScalar(p.scale);
+      return g;
+    }
+  },
+  shell: {
+    icon: '🐢', name: 'Carapace',
+    params: { color: '#2e7d32', scale: 1 },
+    build: p => {
+      const m = new THREE.Mesh(
+        new THREE.SphereGeometry(0.7, 10, 8),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.4 })
+      );
+      m.position.y = 0.8; m.scale.setScalar(p.scale);
+      return m;
+    }
+  },
+  mushroom: {
+    icon: '🍄', name: 'Champignon',
+    params: { capColor: '#e53935', stemColor: '#fff8e1', scale: 1 },
+    build: p => {
+      const g = new THREE.Group();
+      const stem = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25, 0.35, 0.6, 8),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.stemColor), roughness: 0.7 })
+      );
+      stem.position.y = 0.3;
+      const cap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.55, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.capColor), roughness: 0.4 })
+      );
+      cap.position.y = 0.55;
+      g.add(stem, cap); g.scale.setScalar(p.scale);
+      return g;
+    }
+  },
+  star: {
+    icon: '⭐', name: 'Étoile',
+    params: { color: '#ffd700', scale: 1 },
+    build: p => {
+      const shape = new THREE.Shape();
+      const spikes = 5, outer = 0.8, inner = 0.35;
+      for (let i = 0; i < spikes * 2; i++) {
+        const r = i % 2 === 0 ? outer : inner;
+        const a = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
+        const x = Math.cos(a) * r, y = Math.sin(a) * r;
+        i === 0 ? shape.moveTo(x, y) : shape.lineTo(x, y);
+      }
+      shape.closePath();
+      const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.15, bevelEnabled: false });
+      const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+        color: new THREE.Color(p.color), emissive: new THREE.Color(p.color), emissiveIntensity: 0.5, roughness: 0.3
+      }));
+      m.position.y = 0.8; m.scale.setScalar(p.scale);
+      return m;
+    }
+  },
+  pit: {
+    icon: '🏗️', name: 'Bâtiment des stands',
+    params: { color: '#90a4ae', roofColor: '#37474f', length: 30, scale: 1 },
+    build: p => {
+      const g = new THREE.Group();
+      const bodyMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.8 });
+      const roofMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.roofColor), roughness: 0.6 });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(p.length, 7, 10), bodyMat);
+      body.position.y = 3.5; g.add(body);
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(p.length + 0.5, 0.4, 10.8), roofMat);
+      roof.position.y = 7.2; g.add(roof);
+      // portes de stand
+      for (let i = 0; i < 6; i++) {
+        const door = new THREE.Mesh(
+          new THREE.BoxGeometry(3, 4, 0.2),
+          new THREE.MeshStandardMaterial({ color: 0x455a64, roughness: 0.5 })
+        );
+        door.position.set(-p.length/2 + 3 + i * (p.length - 6) / 5, 2, -5.1);
+        g.add(door);
+      }
+      g.scale.setScalar(p.scale);
       return g;
     }
   },
