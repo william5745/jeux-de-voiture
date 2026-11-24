@@ -54274,7 +54274,7 @@ function startRaceFromQualif() {
   const humans = [p1, p2].sort((a, b) => a.qualifTime - b.qualifTime);
   const grid = [...humans, ...bots];
   grid.forEach((p, i) => {
-    const idx = SAMPLES - 12 + i * 2;
+    const idx = SAMPLES - 2 - i * 2; // pole (i=0) le plus proche de la ligne = devant
     const t = curve.getTangentAt(idx / SAMPLES);
     const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
     p.pos.copy(samples[idx]).addScaledVector(side, (grid.length - 1) * 2 - i * 4);
