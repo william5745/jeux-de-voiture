@@ -53515,19 +53515,46 @@ const boostMat = new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x0
   boostPads.push({ index: i, mesh: m, cooldown: 0 });
 });
 
-// Zone de stands (changement de pneus) — présente sur TOUS les circuits, près de la ligne de départ
+// Zone de stands (changement de pneus) — allée des stands à DROITE de la piste, près de la ligne de départ
 const pitPads = [];
 {
-  const pitMat = new THREE.MeshStandardMaterial({ color: 0xff9800, emissive: 0xcc6600, transparent: true, opacity: 0.7 });
-  const i = Math.floor(0.02 * SAMPLES);
-  const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
-  const g = new THREE.PlaneGeometry(ROAD_HALF * 2, 6);
-  const m = new THREE.Mesh(g, pitMat);
-  m.rotation.x = -Math.PI / 2;
-  m.rotation.z = Math.atan2(-t.x, -t.z);
-  m.position.set(p.x, 0.06, p.z);
-  scene.add(m);
-  pitPads.push({ index: i, mesh: m });
+  // Ruban d'asphalte pour l'allée des stands (côté droit = offset négatif)
+  const pitRoadMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.95 });
+  scene.add(buildRibbon(-(ROAD_HALF + 4.5), 6, 0.02, pitRoadMat));
+  // Ligne orange délimitant l'allée des stands côté piste
+  const pitLineMat = new THREE.MeshStandardMaterial({ color: 0xff9800, emissive: 0xcc6600, emissiveIntensity: 0.6 });
+  for (let i = 0; i < SAMPLES; i += 4) {
+    const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
+    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+    // n'afficher la ligne que dans la zone de pit (autour de la ligne de départ)
+    let d0 = Math.abs(i - 0); d0 = Math.min(d0, SAMPLES - d0);
+    if (d0 < SAMPLES * 0.08) {
+      const seg = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.4), pitLineMat);
+      seg.rotation.x = -Math.PI / 2;
+      seg.rotation.z = Math.atan2(-t.x, -t.z);
+      seg.position.copy(p).addScaledVector(side, -(ROAD_HALF + 1.5));
+      seg.position.y = 0.04;
+      scene.add(seg);
+    }
+  }
+  // Panneau "PIT" au début de l'allée
+  {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#ff9800'; ctx.fillRect(0, 0, 256, 128);
+    ctx.fillStyle = '#000'; ctx.font = 'bold 72px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('PIT', 128, 68);
+    const tex = new THREE.CanvasTexture(c);
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(6, 3),
+      new THREE.MeshStandardMaterial({ map: tex, side: THREE.DoubleSide }));
+    const p0 = samples[Math.floor(SAMPLES * 0.97)], t0 = curve.getTangentAt(0.97);
+    const s0 = new THREE.Vector3(-t0.z, 0, t0.x).normalize();
+    sign.position.copy(p0).addScaledVector(s0, -(ROAD_HALF + 8));
+    sign.position.y = 3;
+    sign.rotation.y = Math.atan2(-t0.z, t0.x) + Math.PI;
+    scene.add(sign);
+  }
+  pitPads.push({ index: 0 }); // zone de détection centrée sur la ligne de départ
 }
 
 // Caisses bonus "?" flottantes (style Mario Kart)
@@ -53974,7 +54001,7 @@ function makePlayer(kart, startIndex, keys, color, bot) {
     item: null, hit: 0, star: 0, useItem: false,
     lapStart: 0, bestLap: null, lastLap: null,
     qualifTime: null, prevIdx: startIndex, qualifHalf: false,
-    tires: 100, pitTimer: 0, inPit: false,
+    tires: 100, pitTimer: 0, inPit: false, inPitLane: false,
     bot: !!bot,
     color
   };
@@ -54020,7 +54047,15 @@ function botInput(p, dt) {
   const near = nearestOnTrack(p.pos);
   // point de visée : plus la vitesse est haute, plus on regarde loin
   const look = Math.floor(10 + Math.abs(p.speed) * 0.55);
-  const target = samples[(near.index + look) % SAMPLES];
+  let target = samples[(near.index + look) % SAMPLES];
+  // Les bots visent l'allée des stands (côté droit) quand leurs pneus sont usés
+  const needsPit = p.tires < 25;
+  let distToPit = Math.abs(near.index); distToPit = Math.min(distToPit, SAMPLES - distToPit);
+  if (needsPit && distToPit < SAMPLES * 0.1) {
+    const t = curve.getTangentAt(near.index / SAMPLES);
+    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+    target = samples[near.index].clone().addScaledVector(side, -(ROAD_HALF + 4.5)); // centre de l'allée des stands
+  }
   const desired = Math.atan2(target.x - p.pos.x, target.z - p.pos.z);
   const diff = wrapAngle(desired - p.heading);
   const sharp = Math.abs(diff);
@@ -54031,17 +54066,12 @@ function botInput(p, dt) {
   const brakeSharp = botLevel === 2 ? 1.25 : 1.1;
   const brakeSpeed = botLevel === 2 ? 24 : 18;
   const driftSharp = botLevel === 2 ? 0.6 : 0.75;
-  // Les bots vont aux stands quand leurs pneus sont usés (< 25%)
-  const needsPit = p.tires < 25;
-  const pitIndex = pitPads.length > 0 ? pitPads[0].index : 0;
-  let distToPit = Math.abs(((near.index - pitIndex + SAMPLES) % SAMPLES + SAMPLES) % SAMPLES);
-  distToPit = Math.min(distToPit, SAMPLES - distToPit);
-  // Si besoin de pneus et proche de la zone de pit, on ralentit pour s'y arrêter
-  if (needsPit && distToPit < 15 && Math.abs(p.speed) < 6) {
+  // Si besoin de pneus et dans l'allée des stands, on s'arrête
+  if (needsPit && distToPit < SAMPLES * 0.05 && p.inPitLane && Math.abs(p.speed) < 6) {
     return { up: false, down: true, left: diff > 0.12, right: diff < -0.12, drift: false, useItem: false };
   }
   return {
-    up: !(p.speed >= botMax || (sharp > 0.65 && p.speed > 20)) && !(needsPit && distToPit < 40), // ralentit à l'approche du pit si pneus usés
+    up: !(p.speed >= botMax || (sharp > 0.65 && p.speed > 20)) && !(needsPit && distToPit < SAMPLES * 0.12), // ralentit à l'approche du pit si pneus usés
     down: sharp > brakeSharp && p.speed > brakeSpeed, // freine dans les épingles
     left: diff > 0.12,
     right: diff < -0.12,
@@ -54191,13 +54221,31 @@ function updatePlayer(p, dt) {
 
   // Hors-piste / murs
   const near = nearestOnTrack(p.pos);
-  if (near.dist > ROAD_HALF + 1.2) {
-    // repousse vers la route
-    const dir = samples[near.index].clone().sub(p.pos).setY(0).normalize();
-    p.pos.addScaledVector(dir, (near.dist - (ROAD_HALF + 1.2)) * 0.5);
-    p.speed *= 0.92;
-  } else if (near.dist > ROAD_HALF - 0.5) {
-    p.speed *= 0.985; // vibreur sur les bordures
+  // Calcul de la position latérale par rapport au centre de la piste
+  // side = (-t.z, 0, t.x) = côté GAUCHE, donc latéral négatif = côté DROIT (pit lane)
+  const nearP = samples[near.index];
+  const nearT = curve.getTangentAt(near.index / SAMPLES);
+  const nearSide = new THREE.Vector3(-nearT.z, 0, nearT.x).normalize();
+  const lateral = (p.pos.x - nearP.x) * nearSide.x + (p.pos.z - nearP.z) * nearSide.z;
+  // Zone de pit : autour de la ligne de départ (index ~0)
+  let dStart = Math.abs(near.index); dStart = Math.min(dStart, SAMPLES - dStart);
+  const inPitZone = dStart < SAMPLES * 0.08;
+  const PIT_LANE_INNER = -(ROAD_HALF + 1.5);  // bord piste côté allée
+  const PIT_LANE_OUTER = -(ROAD_HALF + 7.5);  // mur extérieur de l'allée
+
+  if (inPitZone && lateral < PIT_LANE_INNER && lateral > PIT_LANE_OUTER) {
+    // Dans l'allée des stands : autorisé, pas de mur
+    p.inPitLane = true;
+  } else {
+    p.inPitLane = false;
+    if (near.dist > ROAD_HALF + 1.2) {
+      // repousse vers la route
+      const dir = nearP.clone().sub(p.pos).setY(0).normalize();
+      p.pos.addScaledVector(dir, (near.dist - (ROAD_HALF + 1.2)) * 0.5);
+      p.speed *= 0.92;
+    } else if (near.dist > ROAD_HALF - 0.5) {
+      p.speed *= 0.985; // vibreur sur les bordures
+    }
   }
 
   // Pads de boost
@@ -54216,22 +54264,18 @@ function updatePlayer(p, dt) {
     p.tires = Math.max(0, p.tires - Math.abs(p.speed) * dt * 0.12);
   }
 
-  // Zone de stands : si le kart est dans la zone et ralentit, on change les pneus
+  // Zone de stands : si le kart est dans l'allée des stands (à droite) et ralentit, on change les pneus
   p.inPit = false;
-  for (const pad of pitPads) {
-    let d = Math.abs(((near.index - pad.index + SAMPLES) % SAMPLES + SAMPLES) % SAMPLES);
-    d = Math.min(d, SAMPLES - d);
-    if (d < 5 && Math.abs(p.speed) < 4) {
-      p.inPit = true;
-      p.pitTimer += dt;
-      if (p.pitTimer >= 2) { // 2 secondes à l'arrêt = pneus changés
-        p.tires = 100;
-        p.pitTimer = 0;
-        spawnParticle(p.pos.x, 1, p.pos.z, 0xff9800, 0.6, 1.2);
-      }
-    } else {
+  if (p.inPitLane && Math.abs(p.speed) < 4) {
+    p.inPit = true;
+    p.pitTimer += dt;
+    if (p.pitTimer >= 2) { // 2 secondes à l'arrêt dans l'allée = pneus changés
+      p.tires = 100;
       p.pitTimer = 0;
+      spawnParticle(p.pos.x, 1, p.pos.z, 0xff9800, 0.6, 1.2);
     }
+  } else {
+    p.pitTimer = 0;
   }
 
   // Qualification : un tour chrono = franchir la ligne de départ APRÈS avoir
