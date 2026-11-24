@@ -66,6 +66,7 @@
       <div class="obj-item" data-id="cloud"><span class="icon">☁️</span><span class="name">Nuage</span></div>
       <div class="obj-item" data-id="mountain"><span class="icon">⛰️</span><span class="name">Montagne</span></div>
       <div class="obj-item" data-id="stand"><span class="icon">👥</span><span class="name">Tribune</span></div>
+      <div class="obj-item" data-id="aco"><span class="icon">🏢</span><span class="name">Tour ACO</span></div>
     </div>
   </div>
   <div id="viewer">
@@ -374,6 +375,137 @@ const library = {
       roof.position.set(0, 0.5 + p.rows * 0.5, -p.rows * 0.65); g.add(roof);
       g.scale.setScalar(p.scale);
       return g;
+    }
+  },
+  aco: {
+    icon: '🏢', name: 'Tour ACO',
+    params: { scale: 1 },
+    build: p => {
+      // textures procédurales (identiques à celles du jeu)
+      const acoGlassTexture = () => {
+        const c = document.createElement('canvas');
+        c.width = 512; c.height = 256;
+        const x = c.getContext('2d');
+        const grad = x.createLinearGradient(0, 0, 0, 256);
+        grad.addColorStop(0, '#a8cbe9'); grad.addColorStop(0.55, '#5d87b8'); grad.addColorStop(1, '#33547e');
+        x.fillStyle = grad; x.fillRect(0, 0, 512, 256);
+        x.fillStyle = 'rgba(245,245,245,0.9)';
+        for (let col = 0; col <= 16; col++) x.fillRect(col * 32 - 2, 0, 4, 256);
+        x.fillRect(0, 124, 512, 5);
+        x.fillStyle = 'rgba(255,255,255,0.20)';
+        for (let i = 0; i < 5; i++) x.fillRect(i * 110 + 18, 8, 30, 240);
+        const t = new THREE.CanvasTexture(c);
+        t.wrapS = THREE.RepeatWrapping; t.repeat.set(3, 1);
+        return t;
+      };
+      const acoBannerTexture = (text, bg, fg) => {
+        const c = document.createElement('canvas');
+        c.width = 1024; c.height = 64;
+        const x = c.getContext('2d');
+        x.fillStyle = bg; x.fillRect(0, 0, 1024, 64);
+        x.fillStyle = fg; x.font = 'bold 36px Arial';
+        x.textAlign = 'center'; x.textBaseline = 'middle';
+        x.fillText(text, 512, 34);
+        const t = new THREE.CanvasTexture(c);
+        t.wrapS = THREE.RepeatWrapping; t.repeat.set(2, 1);
+        return t;
+      };
+      const acoAnnexTexture = () => {
+        const c = document.createElement('canvas');
+        c.width = 256; c.height = 128;
+        const x = c.getContext('2d');
+        x.fillStyle = '#f2f0ea'; x.fillRect(0, 0, 256, 128);
+        x.fillStyle = '#2c4a6e';
+        for (let r = 0; r < 2; r++)
+          for (let col = 0; col < 6; col++)
+            x.fillRect(14 + col * 40, 16 + r * 52, 28, 36);
+        return new THREE.CanvasTexture(c);
+      };
+
+      const R = 7; // rayon de la tour
+      const glassMat = new THREE.MeshStandardMaterial({ map: acoGlassTexture(), roughness: 0.25, metalness: 0.35 });
+      const whiteMat = new THREE.MeshStandardMaterial({ color: 0xe8e6e0, roughness: 0.75 });
+      const darkMat = new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.55 });
+      const b = new THREE.Group();
+
+      // socle / rez-de-chaussée
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 3, 28), whiteMat);
+      base.position.y = 1.5; base.castShadow = true; base.receiveShadow = true;
+      b.add(base);
+      const door = new THREE.Mesh(
+        new THREE.PlaneGeometry(4, 2.6),
+        new THREE.MeshStandardMaterial({ color: 0x16324f, roughness: 0.2, metalness: 0.6 })
+      );
+      door.position.set(0, 1.3, -R - 0.05);
+      b.add(door);
+
+      // fût en verre (étages de la tour de contrôle)
+      const shaft = new THREE.Mesh(
+        new THREE.CylinderGeometry(R, R, 19, 28),
+        [glassMat, whiteMat, whiteMat]
+      );
+      shaft.position.y = 3 + 9.5; shaft.castShadow = true; shaft.receiveShadow = true;
+      b.add(shaft);
+
+      // bandeaux publicitaires autour de chaque niveau
+      const banners = [
+        [5.2,  'AUTOMOBILE CLUB DE L\'OUEST', '#0d3b8f', '#ffd400'],
+        [9.6,  '24 HEURES DU MANS',            '#ffd400', '#0d3b8f'],
+        [14.0, 'AUTOMOBILE CLUB DE L\'OUEST', '#0d3b8f', '#ffd400'],
+        [18.4, 'ENDURANCE • 24H LE MANS',      '#ffd400', '#0d3b8f'],
+        [21.6, 'ACO • AUTOMOBILE CLUB DE L\'OUEST', '#0d3b8f', '#ffffff']
+      ];
+      for (const [y, text, bg, fg] of banners) {
+        const band = new THREE.Mesh(
+          new THREE.CylinderGeometry(R + 0.25, R + 0.25, 2.1, 28, 1, true),
+          new THREE.MeshStandardMaterial({ map: acoBannerTexture(text, bg, fg), side: THREE.DoubleSide, roughness: 0.6 })
+        );
+        band.position.y = y;
+        b.add(band);
+      }
+
+      // grand toit plat en porte-à-faux
+      const roof = new THREE.Mesh(new THREE.CylinderGeometry(10.2, 10.2, 0.7, 32), darkMat);
+      roof.position.y = 22.35; roof.castShadow = true;
+      b.add(roof);
+      const parapet = new THREE.Mesh(new THREE.CylinderGeometry(10.25, 10.25, 0.9, 32, 1, true), darkMat);
+      parapet.position.y = 22.9;
+      b.add(parapet);
+      // antenne + gyrophare rouge au sommet
+      const mast = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.09, 0.09, 4.5, 6),
+        new THREE.MeshStandardMaterial({ color: 0x9e9e9e, metalness: 0.7, roughness: 0.3 })
+      );
+      mast.position.y = 25;
+      b.add(mast);
+      const beacon = new THREE.Mesh(
+        new THREE.SphereGeometry(0.35, 10, 8),
+        new THREE.MeshStandardMaterial({ color: 0xff2222, emissive: 0xcc0000, emissiveIntensity: 1.4 })
+      );
+      beacon.position.y = 27.4;
+      b.add(beacon);
+
+      // bâtiment annexe blanc avec enseigne 24H
+      const annex = new THREE.Mesh(
+        new THREE.BoxGeometry(17, 7, 9),
+        new THREE.MeshStandardMaterial({ map: acoAnnexTexture(), roughness: 0.7 })
+      );
+      annex.position.set(13, 3.5, 2);
+      annex.castShadow = true; annex.receiveShadow = true;
+      b.add(annex);
+      const annexRoof = new THREE.Mesh(new THREE.BoxGeometry(17.6, 0.4, 9.6), darkMat);
+      annexRoof.position.set(13, 7.2, 2);
+      annexRoof.castShadow = true;
+      b.add(annexRoof);
+      const sign = new THREE.Mesh(
+        new THREE.PlaneGeometry(10, 1.8),
+        new THREE.MeshStandardMaterial({ map: acoBannerTexture('24 HEURES DU MANS', '#b3121f', '#ffffff'), roughness: 0.6 })
+      );
+      sign.position.set(13, 6.2, -2.56);
+      b.add(sign);
+
+      b.scale.setScalar(p.scale);
+      return b;
     }
   },
 };

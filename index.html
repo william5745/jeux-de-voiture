@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Turbo Circuit — Course 3D à 2 joueurs</title>
+<title>Turbo Circuit — Course 3D à 6 karts</title>
 <style>
   html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000;
     font-family: 'Segoe UI', Arial, sans-serif; }
@@ -14,12 +14,26 @@
     border: 1px solid rgba(255, 255, 255, 0.25); backdrop-filter: blur(3px); }
   #hud1 { top: 12px; left: 16px; font-size: 20px; }
   #hud2 { top: 12px; right: 16px; font-size: 20px; text-align: right; }
+  #music-hud { top: 52px; right: 16px; font-size: 14px; }
   #msg { top: 40%; left: 0; right: 0; text-align: center; font-size: 72px; color: #ffe14d;
     background: none; border: none; text-shadow: 3px 3px 0 #b8860b, -2px -2px 0 #b8860b; }
   #help { bottom: 10px; left: 0; right: 0; text-align: center; font-size: 13px; }
   .minimap { position: absolute; bottom: 12px; width: 180px; height: 180px;
     border: 2px solid rgba(255,255,255,.6); border-radius: 8px; background: rgba(0,0,0,.35); z-index: 5; }
   #map1 { left: 12px; } #map2 { right: 12px; }
+  #menu { position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 24px; z-index: 20;
+    background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(4px); }
+  #menu h1 { color: #ffe14d; font-size: 56px; margin: 0;
+    text-shadow: 3px 3px 0 #b8860b; }
+  #menu p { color: #fff; font-size: 20px; margin: 0; font-weight: bold;
+    text-shadow: 1px 1px 0 #000; }
+  .menu-btns { display: flex; gap: 20px; }
+  .menu-btns button { font-size: 24px; font-weight: bold; padding: 16px 36px;
+    border-radius: 14px; border: 2px solid rgba(255,255,255,.5); cursor: pointer;
+    background: rgba(30, 136, 229, .85); color: #fff; transition: transform .1s, background .1s; }
+  .menu-btns button:hover { transform: scale(1.06); background: rgba(30, 136, 229, 1); }
+  #menu.hidden { display: none; }
 </style>
 <script type="importmap">
 { "imports": { "three": "./three.module.js" } }
@@ -38,10 +52,20 @@
 <div id="game"></div>
 <div id="hud1" class="hud">🔴 J1 — Tour 1/3</div>
 <div id="hud2" class="hud">🔵 J2 — Tour 1/3</div>
+<div id="music-hud" class="hud">🎵</div>
 <div id="msg" class="hud"></div>
-<div id="help" class="hud">J1 : Z Q S D + Espace (drift) + A (objet) &nbsp;|&nbsp; J2 : Flèches + Maj droite (drift) + Entrée (objet) &nbsp;|&nbsp; 3 tours pour gagner !</div>
+<div id="help" class="hud">J1 : Z Q S D + Espace (drift) + A (objet) &nbsp;|&nbsp; J2 : Flèches + Maj droite (drift) + Entrée (objet) &nbsp;|&nbsp; 4 bots &nbsp;|&nbsp; M = musique on/off &nbsp;|&nbsp; N = moteur F1 on/off &nbsp;|&nbsp; 3 tours !</div>
 <canvas id="map1" class="minimap" width="180" height="180"></canvas>
 <canvas id="map2" class="minimap" width="180" height="180"></canvas>
+<div id="menu">
+  <h1>🏁 Turbo Circuit</h1>
+  <p>Choisis le niveau des bots : (⏱️ qualification automatique avant la course)</p>
+  <div class="menu-btns">
+    <button data-level="1">🤖 Niveau 1 — Facile</button>
+    <button data-level="2">🤖 Niveau 2 — Difficile</button>
+  </div>
+  <p>(ou appuie sur 1 ou 2)</p>
+</div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -455,6 +479,195 @@ function fireShell(p) {
   scene.add(gantry);
 }
 
+// Bâtiment ACO des 24 Heures du Mans — tour de direction de course ronde (style photo)
+function acoGlassTexture() {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 256;
+  const x = c.getContext('2d');
+  // verre teinté avec reflet de ciel
+  const grad = x.createLinearGradient(0, 0, 0, 256);
+  grad.addColorStop(0, '#a8cbe9'); grad.addColorStop(0.55, '#5d87b8'); grad.addColorStop(1, '#33547e');
+  x.fillStyle = grad; x.fillRect(0, 0, 512, 256);
+  // montants blancs de la façade courbe
+  x.fillStyle = 'rgba(245,245,245,0.9)';
+  for (let col = 0; col <= 16; col++) x.fillRect(col * 32 - 2, 0, 4, 256);
+  x.fillRect(0, 124, 512, 5);
+  // reflets de nuages
+  x.fillStyle = 'rgba(255,255,255,0.20)';
+  for (let i = 0; i < 5; i++) x.fillRect(i * 110 + 18, 8, 30, 240);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = THREE.RepeatWrapping; t.repeat.set(3, 1);
+  return t;
+}
+function acoBannerTexture(text, bg, fg) {
+  const c = document.createElement('canvas');
+  c.width = 1024; c.height = 64;
+  const x = c.getContext('2d');
+  x.fillStyle = bg; x.fillRect(0, 0, 1024, 64);
+  x.fillStyle = fg; x.font = 'bold 36px Arial';
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(text, 512, 34);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = THREE.RepeatWrapping; t.repeat.set(2, 1);
+  return t;
+}
+function buildACOBuilding(frac, sideSign) {
+  const i = Math.floor(frac * SAMPLES);
+  const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
+  const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+  const b = new THREE.Group();
+
+  const R = 7;                 // rayon de la tour
+  const glassMat = new THREE.MeshStandardMaterial({ map: acoGlassTexture(), roughness: 0.25, metalness: 0.35 });
+  const whiteMat = new THREE.MeshStandardMaterial({ color: 0xe8e6e0, roughness: 0.75 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.55 });
+
+  // socle / rez-de-chaussée
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 3, 28), whiteMat);
+  base.position.y = 1.5; base.castShadow = true; base.receiveShadow = true;
+  b.add(base);
+  const door = new THREE.Mesh(
+    new THREE.PlaneGeometry(4, 2.6),
+    new THREE.MeshStandardMaterial({ color: 0x16324f, roughness: 0.2, metalness: 0.6, side: THREE.DoubleSide })
+  );
+  door.position.set(0, 1.3, -R - 0.05);
+  b.add(door);
+
+  // fût en verre (étages de la tour de contrôle)
+  const shaft = new THREE.Mesh(
+    new THREE.CylinderGeometry(R, R, 19, 28),
+    [glassMat, whiteMat, whiteMat]
+  );
+  shaft.position.y = 3 + 9.5; shaft.castShadow = true; shaft.receiveShadow = true;
+  b.add(shaft);
+
+  // bandeaux publicitaires autour de chaque niveau (bleu/jaune comme sur la photo)
+  const banners = [
+    [5.2,  'AUTOMOBILE CLUB DE L\'OUEST', '#0d3b8f', '#ffd400'],
+    [9.6,  '24 HEURES DU MANS',            '#ffd400', '#0d3b8f'],
+    [14.0, 'AUTOMOBILE CLUB DE L\'OUEST', '#0d3b8f', '#ffd400'],
+    [18.4, 'ENDURANCE • 24H LE MANS',      '#ffd400', '#0d3b8f'],
+    [21.6, 'ACO • AUTOMOBILE CLUB DE L\'OUEST', '#0d3b8f', '#ffffff']
+  ];
+  for (const [y, text, bg, fg] of banners) {
+    const band = new THREE.Mesh(
+      new THREE.CylinderGeometry(R + 0.25, R + 0.25, 2.1, 28, 1, true),
+      new THREE.MeshStandardMaterial({ map: acoBannerTexture(text, bg, fg), side: THREE.DoubleSide, roughness: 0.6 })
+    );
+    band.position.y = y;
+    b.add(band);
+  }
+
+  // grand toit plat en porte-à-faux (comme la photo)
+  const roof = new THREE.Mesh(new THREE.CylinderGeometry(10.2, 10.2, 0.7, 32), darkMat);
+  roof.position.y = 22.35; roof.castShadow = true;
+  b.add(roof);
+  const parapet = new THREE.Mesh(new THREE.CylinderGeometry(10.25, 10.25, 0.9, 32, 1, true), darkMat);
+  parapet.position.y = 22.9;
+  b.add(parapet);
+  // antenne + gyrophare rouge au sommet
+  const mast = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.09, 0.09, 4.5, 6),
+    new THREE.MeshStandardMaterial({ color: 0x9e9e9e, metalness: 0.7, roughness: 0.3 })
+  );
+  mast.position.y = 25;
+  b.add(mast);
+  const beacon = new THREE.Mesh(
+    new THREE.SphereGeometry(0.35, 10, 8),
+    new THREE.MeshStandardMaterial({ color: 0xff2222, emissive: 0xcc0000, emissiveIntensity: 1.4 })
+  );
+  beacon.position.y = 27.4;
+  b.add(beacon);
+
+  // placement : derrière les gradins existants, face à la piste
+  b.position.copy(p).addScaledVector(side, sideSign * (ROAD_HALF + 25));
+  b.rotation.y = Math.atan2(-t.z, t.x);
+  scene.add(b);
+}
+// Tour ACO juste après la ligne de départ
+buildACOBuilding(0.05, 1);
+
+// Long bâtiment du paddock qui longe TOUTE la ligne de départ (style bâtiment des stands du Mans)
+function pitFrontTexture() {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = '#f2f0ea'; x.fillRect(0, 0, 512, 256);
+  x.fillStyle = '#0d3b8f'; x.fillRect(0, 0, 512, 34);              // bandeau bleu ACO
+  x.fillStyle = '#2c4a6e';                                        // fenêtres des étages
+  for (let r = 0; r < 2; r++)
+    for (let col = 0; col < 8; col++)
+      x.fillRect(12 + col * 62, 48 + r * 56, 40, 38);
+  // portes de stands au rez-de-chaussée (côté piste)
+  x.fillStyle = '#3a3f45'; x.fillRect(0, 168, 512, 88);
+  x.fillStyle = '#59616b';
+  for (let col = 0; col < 8; col++)
+    x.fillRect(8 + col * 62, 176, 46, 72);
+  return new THREE.CanvasTexture(c);
+}
+function pitBackTexture() {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = '#e8e6e0'; x.fillRect(0, 0, 512, 256);
+  x.fillStyle = '#0d3b8f'; x.fillRect(0, 0, 512, 34);
+  x.fillStyle = '#2c4a6e';
+  for (let r = 0; r < 3; r++)
+    for (let col = 0; col < 8; col++)
+      x.fillRect(12 + col * 62, 48 + r * 66, 40, 44);
+  return new THREE.CanvasTexture(c);
+}
+function buildPitBuilding(fracStart, fracEnd, offset) {
+  const i0 = Math.floor(fracStart * SAMPLES);
+  const total = Math.round((fracEnd - fracStart + 1) * SAMPLES);   // boucle fermée (passe par sample 0)
+  const segSamples = 5;
+  const segLen = (curve.getLength() / SAMPLES) * segSamples + 0.9;
+  const frontMat = new THREE.MeshStandardMaterial({ map: pitFrontTexture(), roughness: 0.7 });
+  const backMat = new THREE.MeshStandardMaterial({ map: pitBackTexture(), roughness: 0.7 });
+  const endMat = new THREE.MeshStandardMaterial({ color: 0xdcd9d2, roughness: 0.8 });
+  const topMat = new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.8 });
+  const mats = [endMat, endMat, topMat, endMat, backMat, frontMat]; // -z = côté piste
+  const roofMat = new THREE.MeshStandardMaterial({ color: 0x2f3a42, roughness: 0.6 });
+  const g = new THREE.Group();
+  let segCount = 0;
+  for (let k = 0; k < total; k += segSamples) {
+    const i = (i0 + k) % SAMPLES;
+    const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
+    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+    const seg = new THREE.Mesh(new THREE.BoxGeometry(segLen, 7, 10), mats);
+    seg.position.copy(p).addScaledVector(side, offset);
+    seg.position.y = 3.5;
+    seg.rotation.y = Math.atan2(-t.z, t.x);   // longueur du segment le long de la piste
+    seg.castShadow = true; seg.receiveShadow = true;
+    g.add(seg);
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(segLen + 0.5, 0.4, 10.8), roofMat);
+    roof.position.copy(seg.position);
+    roof.position.y = 7.2;
+    roof.rotation.y = seg.rotation.y;
+    roof.castShadow = true;
+    g.add(roof);
+    // enseigne 24H sur un segment sur trois, côté piste
+    if (segCount % 3 === 0) {
+      const sign = new THREE.Mesh(
+        new THREE.PlaneGeometry(11, 2),
+        new THREE.MeshStandardMaterial({ map: acoBannerTexture('24 HEURES DU MANS • ACO', '#b3121f', '#ffffff'), roughness: 0.6, side: THREE.DoubleSide })
+      );
+      sign.position.copy(p).addScaledVector(side, offset - 5.05);
+      sign.position.y = 5.6;
+      sign.rotation.y = Math.atan2(-t.z, t.x) + Math.PI;  // face à la piste
+      g.add(sign);
+    }
+    segCount++;
+  }
+  scene.add(g);
+}
+// le bâtiment s'étend sur toute la longueur de la ligne de départ (de 0.962 à 0.078, en passant par la ligne)
+buildPitBuilding(0.962, 0.078, ROAD_HALF + 25);
+
+// Tribunes principales en face de la tour ACO (côté opposé de la piste)
+buildStand(0.055, -1, 8, 14);
+buildStand(0.105, -1, 6, 10);
+
 // Décor : arbres et panneaux
 function addTree(x, z) {
   const trunk = new THREE.Mesh(
@@ -580,11 +793,15 @@ function makeKart(color) {
 
 const kart1 = makeKart(0xe53935); // rouge
 const kart2 = makeKart(0x1e88e5); // bleu
+const kart3 = makeKart(0x43a047); // vert
+const kart4 = makeKart(0xfb8c00); // orange
+const kart5 = makeKart(0x8e24aa); // violet
+const kart6 = makeKart(0xfdd835); // jaune
 
 const TOTAL_LAPS = 3;
 const CHECKPOINTS = [Math.floor(SAMPLES * 0.33), Math.floor(SAMPLES * 0.66)];
 
-function makePlayer(kart, startIndex, keys) {
+function makePlayer(kart, startIndex, keys, color, bot) {
   const i = startIndex;
   const p = samples[i];
   const t = curve.getTangentAt(i / SAMPLES);
@@ -596,24 +813,66 @@ function makePlayer(kart, startIndex, keys) {
     lap: 1, nextCp: 0, finished: false, finishTime: 0,
     boost: 0, drift: 0, turbo: 0, turn: 0,
     item: null, hit: 0, star: 0, useItem: false,
-    color: kart === kart1 ? '#e53935' : '#1e88e5'
+    lapStart: 0, bestLap: null, lastLap: null,
+    qualifTime: null, prevIdx: startIndex,
+    bot: !!bot,
+    color
   };
 }
 
 // On utilise e.key (lettre affichée) et non e.code (position physique) pour
 // que ça marche sur les claviers AZERTY comme QWERTY.
 // Les karts démarrent derrière la ligne blanche (indices négatifs = avant le tour 0)
-const p1 = makePlayer(kart1, SAMPLES - 10, { up: 'z', down: 's', left: 'q', right: 'd', drift: ' ', item: 'a' });
-const p2 = makePlayer(kart2, SAMPLES - 4, { up: 'arrowup', down: 'arrowdown', left: 'arrowleft', right: 'arrowright', drift: 'shiftright', item: 'enter' });
+const p1 = makePlayer(kart1, SAMPLES - 12, { up: 'z', down: 's', left: 'q', right: 'd', drift: ' ', item: 'a' }, '#e53935');
+const p2 = makePlayer(kart2, SAMPLES - 10, { up: 'arrowup', down: 'arrowdown', left: 'arrowleft', right: 'arrowright', drift: 'shiftright', item: 'enter' }, '#1e88e5');
+// Bots supplémentaires sur la grille
+const bots = [
+  makePlayer(kart3, SAMPLES - 8, null, '#43a047', true),
+  makePlayer(kart4, SAMPLES - 6, null, '#fb8c00', true),
+  makePlayer(kart5, SAMPLES - 4, null, '#8e24aa', true),
+  makePlayer(kart6, SAMPLES - 2, null, '#fdd835', true)
+];
 // décalage latéral de chaque kart sur la grille
 {
-  const t = curve.getTangentAt((SAMPLES - 10) / SAMPLES);
+  const t = curve.getTangentAt((SAMPLES - 12) / SAMPLES);
   const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-  p1.pos.addScaledVector(side, 3.5);
-  p2.pos.addScaledVector(side, -3.5);
+  const all = [p1, p2, ...bots];
+  all.forEach((p, i) => p.pos.addScaledVector(side, (all.length - 1) * 2 - i * 4));
 }
 
-const players = [p1, p2];
+const players = [p1, p2, ...bots];
+
+/* ============================= IA (BOTS) ============================= */
+// Le bot vise un point de la piste devant lui et tourne en conséquence.
+function wrapAngle(a) {
+  while (a > Math.PI) a -= Math.PI * 2;
+  while (a < -Math.PI) a += Math.PI * 2;
+  return a;
+}
+function botInput(p, dt) {
+  const near = nearestOnTrack(p.pos);
+  // point de visée : plus la vitesse est haute, plus on regarde loin
+  const look = Math.floor(10 + Math.abs(p.speed) * 0.55);
+  const target = samples[(near.index + look) % SAMPLES];
+  const desired = Math.atan2(target.x - p.pos.x, target.z - p.pos.z);
+  const diff = wrapAngle(desired - p.heading);
+  const sharp = Math.abs(diff);
+  // Niveau 1 : bots moins forts (vitesse max réduite, freinage plus tôt, drift moins fréquent)
+  // Niveau 2 : bots plus rapides et plus agressifs, proches des humains
+  const idx = players.indexOf(p) % 4;
+  const botMax = botLevel === 2 ? 30 + idx : 26 + idx; // 30-33 ou 26-29, vs 34 pour les humains
+  const brakeSharp = botLevel === 2 ? 1.25 : 1.1;
+  const brakeSpeed = botLevel === 2 ? 24 : 18;
+  const driftSharp = botLevel === 2 ? 0.6 : 0.75;
+  return {
+    up: !(p.speed >= botMax || (sharp > 0.65 && p.speed > 20)), // accélère jusqu'à sa vitesse max, sauf gros virage
+    down: sharp > brakeSharp && p.speed > brakeSpeed, // freine dans les épingles
+    left: diff > 0.12,
+    right: diff < -0.12,
+    drift: sharp > driftSharp && p.speed > DRIFT_MIN_SPEED,
+    useItem: p.item && Math.random() < (botLevel === 2 ? 0.03 : 0.015)
+  };
+}
 
 // Particules (fumée, étincelles)
 const particles = [];
@@ -644,7 +903,7 @@ window.addEventListener('keydown', e => {
   keysDown[e.code.toLowerCase()] = true; // pour distinguer Maj gauche/droite
   if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(e.key.toLowerCase())) e.preventDefault();
   // touche objet : front unique
-  for (const p of players) if (e.key.toLowerCase() === p.keys.item) p.useItem = true;
+  for (const p of players) if (p.keys && e.key.toLowerCase() === p.keys.item) p.useItem = true;
 });
 window.addEventListener('keyup', e => {
   keysDown[e.key.toLowerCase()] = false;
@@ -654,16 +913,29 @@ window.addEventListener('keyup', e => {
 /* ============================= LOGIQUE ============================= */
 const MAX_SPEED = 34, REVERSE_MAX = 10, ACCEL = 17, BRAKE = 34, TURN = 2.6;
 const DRIFT_TURN = 3.6, DRIFT_MIN_SPEED = 14;
-let raceState = 'countdown'; // countdown | racing | finished
+let botLevel = 1; // niveau des bots choisi dans le menu (1 ou 2)
+let raceState = 'menu'; // menu | qualif | qualifResults | countdown | racing | finished
 let countdown = 3.999;
 let raceClock = 0;
 let animTime = 0;
+// Qualification automatique avant la course : tour chrono de J1 puis J2
+let qualifClock = 0;
+let qualifIdx = 0;
+const qualifPlayer = () => players[qualifIdx]; // J1 d'abord, puis J2
+const isQualifActive = p => raceState === 'qualif' && !p.bot && p === qualifPlayer();
 
 function updatePlayer(p, dt) {
   const k = p.keys;
-  const up = keysDown[k.up], down = keysDown[k.down];
-  const left = keysDown[k.left], right = keysDown[k.right];
-  const driftKey = keysDown[k.drift];
+  let up, down, left, right, driftKey;
+  if (p.bot) {
+    const b = botInput(p, dt);
+    up = b.up; down = b.down; left = b.left; right = b.right; driftKey = b.drift;
+    if (b.useItem) p.useItem = true;
+  } else {
+    up = keysDown[k.up]; down = keysDown[k.down];
+    left = keysDown[k.left]; right = keysDown[k.right];
+    driftKey = keysDown[k.drift];
+  }
 
   // --- États spéciaux ---
   if (p.hit > 0) { // touché par une carapace : toupie + grosse perte de vitesse
@@ -680,7 +952,7 @@ function updatePlayer(p, dt) {
   }
   p.useItem = false;
 
-  if (raceState === 'racing' && !p.finished) {
+  if ((raceState === 'racing' && !p.finished) || isQualifActive(p)) {
     if (up) p.speed += ACCEL * dt;
     else if (down) p.speed -= (p.speed > 0 ? BRAKE : ACCEL * 0.6) * dt;
     else p.speed -= Math.sign(p.speed) * Math.min(Math.abs(p.speed), 8 * dt); // frottement
@@ -696,7 +968,7 @@ function updatePlayer(p, dt) {
   const speedFactor = Math.min(1, Math.abs(p.speed) / 10) * Math.sign(p.speed || 1);
 
   // --- Drift façon Mario Kart ---
-  if (p.drift === 0 && driftKey && steer !== 0 && p.speed > DRIFT_MIN_SPEED && raceState === 'racing') {
+  if (p.drift === 0 && driftKey && steer !== 0 && p.speed > DRIFT_MIN_SPEED && (raceState === 'racing' || isQualifActive(p))) {
     p.drift = steer;      // démarre le drift dans la direction du virage
     p.turbo = 0;          // charge du mini-turbo
   }
@@ -742,13 +1014,28 @@ function updatePlayer(p, dt) {
     pad.mesh.material.emissive.setHex(pad.cooldown > 0 ? 0x003344 : 0x0088aa);
   }
 
-  // Checkpoints et tours
+  // Qualification : un tour chrono = franchir la ligne de départ
+  if (raceState === 'qualif' && !p.bot) {
+    if (isQualifActive(p) && p.prevIdx > SAMPLES - 40 && near.index < 40 && p.qualifTime === null) {
+      p.qualifTime = qualifClock;   // J1/J2 a bouclé un tour complet -> son temps est validé
+      qualifIdx++;
+      qualifClock = 0;              // le chrono repart à zéro pour le joueur suivant
+      if (qualifIdx >= 2) raceState = 'qualifResults';
+    }
+    p.prevIdx = near.index;
+  }
+
+  // Checkpoints et tours (avec chronométrage de chaque tour)
   if (raceState === 'racing' && !p.finished) {
     const target = p.nextCp < CHECKPOINTS.length ? CHECKPOINTS[p.nextCp] : 0;
     let d = (near.index - target + SAMPLES) % SAMPLES;
     if (d < 6 || d > SAMPLES - 6) {
       if (p.nextCp < CHECKPOINTS.length) p.nextCp++;
       else {
+        const lapTime = raceClock - p.lapStart;
+        p.lastLap = lapTime;
+        if (p.bestLap === null || lapTime < p.bestLap) p.bestLap = lapTime;
+        p.lapStart = raceClock;
         p.lap++;
         p.nextCp = 0;
         if (p.lap > TOTAL_LAPS) {
@@ -811,7 +1098,7 @@ for (const s of samples) {
   minX = Math.min(minX, s.x); maxX = Math.max(maxX, s.x);
   minZ = Math.min(minZ, s.z); maxZ = Math.max(maxZ, s.z);
 }
-function drawMap(ctx, p, other) {
+function drawMap(ctx, p) {
   ctx.clearRect(0, 0, 180, 180);
   ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 4;
   ctx.beginPath();
@@ -821,13 +1108,153 @@ function drawMap(ctx, p, other) {
     i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
   });
   ctx.closePath(); ctx.stroke();
-  for (const q of [other, p]) {
+  for (const q of players) {
     const x = 10 + (q.pos.x - minX) / (maxX - minX) * 160;
     const y = 10 + (q.pos.z - minZ) / (maxZ - minZ) * 160;
     ctx.fillStyle = q.color;
     ctx.beginPath(); ctx.arc(x, y, q === p ? 6 : 4, 0, Math.PI * 2); ctx.fill();
   }
 }
+
+/* ============================= MUSIQUE (fichiers libres de droit dans music/) ============================= */
+const Music = {
+  tracks: ['music/techno1.ogg', 'music/techno2.ogg', 'music/neon.ogg', 'music/raceway.mp3', 'music/rock1.mp3', 'music/rock2.mp3'],
+  names:  ['Techno Drive', 'Winning the Race', 'Neon Circuit', 'Pure Raceway', 'Hard Rock', 'Let\'s Rock'],
+  audio: null, index: 0, muted: false, started: false, el: null,
+  show(t) { if (this.el) this.el.textContent = t; },
+  start() {
+    if (!this.el) this.el = document.getElementById('music-hud');
+    if (!this.audio) {
+      this.audio = new window.Audio();
+      this.audio.volume = 0.5;
+      this.audio.addEventListener('ended', () => this.next());
+      this.audio.addEventListener('error', () => this.show('❌ erreur chargement : ' + this.tracks[this.index]));
+    }
+    if (!this.started) { this.started = true; this.index = Math.floor(Math.random() * this.tracks.length); }
+    this.audio.src = this.tracks[this.index];
+    const p = this.audio.play();
+    if (p) p.then(() => this.show((this.muted ? '🔇 ' : '🔊 ') + this.names[this.index]))
+            .catch(e => this.show('⚠️ lecture bloquée (' + e.name + ') — cliquez encore une fois'));
+  },
+  next() {
+    this.index = (this.index + 1) % this.tracks.length;
+    this.audio.src = this.tracks[this.index];
+    const p = this.audio.play();
+    if (p) p.then(() => this.show((this.muted ? '🔇 ' : '🔊 ') + this.names[this.index])).catch(() => {});
+  },
+  toggleMute() {
+    this.muted = !this.muted;
+    if (this.audio) this.audio.muted = this.muted;
+    this.show((this.muted ? '🔇 ' : '🔊 ') + (this.names[this.index] || ''));
+  }
+};
+
+/* ============================= SON MOTEUR F1 (Web Audio API) ============================= */
+const MoteurF1 = {
+  ctx: null, osc1: null, osc2: null, osc3: null, gain: null, lfo: null, lfoGain: null,
+  running: false, muted: false,
+  init() {
+    if (this.ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    this.ctx = new AC();
+    // Onde principale + harmoniques pour un son de moteur riche
+    this.osc1 = this.ctx.createOscillator();
+    this.osc1.type = 'sawtooth';
+    this.osc2 = this.ctx.createOscillator();
+    this.osc2.type = 'square';
+    this.osc3 = this.ctx.createOscillator();
+    this.osc3.type = 'sawtooth';
+    // LFO pour la vibration du moteur
+    this.lfo = this.ctx.createOscillator();
+    this.lfo.type = 'sine';
+    this.lfo.frequency.value = 30;
+    this.lfoGain = this.ctx.createGain();
+    this.lfoGain.gain.value = 8;
+    this.lfo.connect(this.lfoGain);
+    // Filtre passe-bas pour adoucir le son
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 1200;
+    filter.Q.value = 2;
+    // Gain principal
+    this.gain = this.ctx.createGain();
+    this.gain.gain.value = 0.0;
+    this.osc1.connect(filter);
+    this.osc2.connect(filter);
+    this.osc3.connect(filter);
+    filter.connect(this.gain);
+    this.gain.connect(this.ctx.destination);
+    this.lfoGain.connect(this.osc1.frequency);
+    this.osc1.start();
+    this.osc2.start();
+    this.osc3.start();
+    this.lfo.start();
+    this.running = true;
+  },
+  // Met à jour le son selon la vitesse du kart (0..1 normalisé)
+  update(vitesse) {
+    if (!this.ctx || !this.running) return;
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const v = Math.min(1, Math.abs(vitesse) / 34); // normalisé 0..1
+    const baseFreq = 60 + v * 320; // fréquence de base selon la vitesse
+    const t = this.ctx.currentTime;
+    this.osc1.frequency.setTargetAtTime(baseFreq, t, 0.05);
+    this.osc2.frequency.setTargetAtTime(baseFreq * 2.01, t, 0.05); // harmonique aiguë
+    this.osc3.frequency.setTargetAtTime(baseFreq * 0.5, t, 0.05);  // sous-harmonique grave
+    this.lfo.frequency.setTargetAtTime(20 + v * 80, t, 0.1);
+    const vol = this.muted ? 0 : 0.04 + v * 0.12;
+    this.gain.gain.setTargetAtTime(vol, t, 0.08);
+  },
+  toggleMute() {
+    this.muted = !this.muted;
+    if (this.gain) this.gain.gain.setTargetAtTime(this.muted ? 0 : 0.1, this.ctx.currentTime, 0.05);
+  }
+};
+
+/* ============================= MENU ============================= */
+const menuEl = document.getElementById('menu');
+function startRace(level) {
+  botLevel = level;
+  menuEl.classList.add('hidden');
+  Music.start();
+  MoteurF1.init(); // démarre le son de moteur F1
+  startQualif(); // qualification automatique avant chaque course
+}
+function startQualif() {
+  raceState = 'qualif';
+  qualifClock = 0;
+  qualifIdx = 0;
+  p1.qualifTime = null; p2.qualifTime = null;
+}
+// Course lancée après la qualif : grille ordonnée par les temps (pole = plus rapide)
+function startRaceFromQualif() {
+  const humans = [p1, p2].sort((a, b) => a.qualifTime - b.qualifTime);
+  const grid = [...humans, ...bots];
+  grid.forEach((p, i) => {
+    const idx = SAMPLES - 12 + i * 2;
+    const t = curve.getTangentAt(idx / SAMPLES);
+    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+    p.pos.copy(samples[idx]).addScaledVector(side, (grid.length - 1) * 2 - i * 4);
+    p.heading = Math.atan2(t.x, t.z);
+    p.speed = 0; p.lap = 1; p.nextCp = 0; p.prevIdx = idx;
+    p.lapStart = 0; p.bestLap = null; p.lastLap = null;
+    p.finished = false; p.finishTime = 0; p.item = null; p.boost = 0; p.hit = 0; p.star = 0;
+  });
+  raceClock = 0;
+  raceState = 'countdown';
+  countdown = 3.999;
+}
+menuEl.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', () => startRace(Number(btn.dataset.level)));
+});
+window.addEventListener('keydown', e => {
+  if (raceState === 'menu' && (e.key === '1' || e.key === '2')) startRace(Number(e.key));
+  if (raceState === 'qualifResults') startRaceFromQualif(); // n'importe quelle touche lance la course
+  if (e.key === 'm' || e.key === 'M') Music.toggleMute(); // M = couper/remettre la musique
+  if (e.key === 'n' || e.key === 'N') MoteurF1.toggleMute(); // N = couper/remettre le moteur
+});
+// Si la lecture a été bloquée par le navigateur, chaque clic la relance
+window.addEventListener('pointerdown', () => { if (raceState !== 'menu' && Music.audio && Music.audio.paused) Music.start(); });
 
 /* ============================= BOUCLE ============================= */
 const clock = new THREE.Clock();
@@ -836,18 +1263,26 @@ function animate() {
   const dt = Math.min(clock.getDelta(), 0.05);
   animTime += dt;
 
-  if (raceState === 'countdown') {
+  if (raceState === 'qualif') {
+    qualifClock += dt;
+    const q = qualifPlayer();
+    msg.textContent = `⏱️ Qualification — ${q === p1 ? '🔴 J1' : '🔵 J2'} — ${qualifClock.toFixed(1)}s`;
+  } else if (raceState === 'qualifResults') {
+    const [a] = [p1, p2].sort((x, y) => x.qualifTime - y.qualifTime);
+    msg.textContent = `⏱️ Qualif : 🔴 ${p1.qualifTime.toFixed(1)}s | 🔵 ${p2.qualifTime.toFixed(1)}s — 🏆 ${a === p1 ? '🔴 J1' : '🔵 J2'} EN POLE ! (touche = départ)`;
+  } else if (raceState === 'countdown') {
     countdown -= dt;
-    const n = Math.ceil(countdown);
     msg.textContent = countdown > 0.999 ? '3' : countdown > 1.999 ? '2' : countdown > 2.999 ? '1' : 'GO !';
     if (countdown <= 0) { raceState = 'racing'; msg.textContent = ''; }
   } else if (raceState === 'racing') {
     raceClock += dt;
   }
 
-  updatePlayer(p1, dt);
-  updatePlayer(p2, dt);
+  if (raceState !== 'menu') for (const p of players) updatePlayer(p, dt);
   updateParticles(dt);
+
+  // Son du moteur F1 selon la vitesse du joueur 1
+  if (raceState !== 'menu') MoteurF1.update(p1.speed);
 
   // Caisses "?" : rotation + réapparition
   for (const b of itemBoxes) {
@@ -880,18 +1315,21 @@ function animate() {
     if (dead) { scene.remove(s.mesh); shells.splice(i, 1); }
   }
 
-  // Collision entre les deux karts (they se poussent)
-  {
-    const d = p1.pos.distanceTo(p2.pos);
-    if (d < 2.6 && d > 0.001) {
-      const push = (2.6 - d) / 2;
-      const dir = p2.pos.clone().sub(p1.pos).normalize();
-      p1.pos.addScaledVector(dir, -push);
-      p2.pos.addScaledVector(dir, push);
-      // un joueur sous étoile ne perd pas de vitesse dans la collision
-      const avg = (p1.speed + p2.speed) / 2;
-      if (p1.star <= 0) p1.speed = p1.speed * 0.7 + avg * 0.3;
-      if (p2.star <= 0) p2.speed = p2.speed * 0.7 + avg * 0.3;
+  // Collisions entre karts (ils se poussent)
+  for (let i = 0; i < players.length; i++) {
+    for (let j = i + 1; j < players.length; j++) {
+      const a = players[i], b = players[j];
+      const d = a.pos.distanceTo(b.pos);
+      if (d < 2.6 && d > 0.001) {
+        const push = (2.6 - d) / 2;
+        const dir = b.pos.clone().sub(a.pos).normalize();
+        a.pos.addScaledVector(dir, -push);
+        b.pos.addScaledVector(dir, push);
+        // un joueur sous étoile ne perd pas de vitesse dans la collision
+        const avg = (a.speed + b.speed) / 2;
+        if (a.star <= 0) a.speed = a.speed * 0.7 + avg * 0.3;
+        if (b.star <= 0) b.speed = b.speed * 0.7 + avg * 0.3;
+      }
     }
   }
 
@@ -915,17 +1353,22 @@ function animate() {
   // HUD
   const fmt = p => p.finished
     ? `🏁 ${p === p1 ? 'J1' : 'J2'} a fini en ${p.finishTime.toFixed(1)}s !`
-    : `Tour ${Math.min(p.lap, TOTAL_LAPS)}/${TOTAL_LAPS} — ${Math.abs(p.speed * 3.6).toFixed(0)} km/h`;
+    : raceState === 'qualif'
+      ? (p.qualifTime !== null ? `⏱️ qualif ${p.qualifTime.toFixed(1)}s ✓` : isQualifActive(p) ? `⏱️ qualif — ${qualifClock.toFixed(1)}s` : '⏱️ en attente…')
+      : `Tour ${Math.min(p.lap, TOTAL_LAPS)}/${TOTAL_LAPS} — ${Math.abs(p.speed * 3.6).toFixed(0)} km/h`
+        + (p.bestLap !== null ? ` — ⏱️ record ${p.bestLap.toFixed(1)}s` : '');
   hud1.textContent = `🔴 J1 — ${fmt(p1)}${p1.item ? '  ' + p1.item.icon : ''}${p1.star > 0 ? ' ✨' : ''}`;
   hud2.textContent = `🔵 J2 — ${fmt(p2)}${p2.item ? '  ' + p2.item.icon : ''}${p2.star > 0 ? ' ✨' : ''}`;
   if (raceState === 'finished') {
-    const winner = p1.finishTime <= p2.finishTime ? '🔴 J1' : '🔵 J2';
-    msg.textContent = `🏆 ${winner} GAGNE ! (R = rejouer)`;
+    let winner = players[0];
+    for (const p of players) if (p.finishTime < winner.finishTime) winner = p;
+    const label = p => p === p1 ? '🔴 J1' : p === p2 ? '🔵 J2' : `🤖 Bot ${players.indexOf(p) - 1}`;
+    msg.textContent = `🏆 ${label(winner)} GAGNE ! — Records : 🔴 ${p1.bestLap !== null ? p1.bestLap.toFixed(1) + 's' : '-'} | 🔵 ${p2.bestLap !== null ? p2.bestLap.toFixed(1) + 's' : '-'} (R = rejouer)`;
     if (keysDown['r']) location.reload();
   }
 
-  drawMap(map1, p1, p2);
-  drawMap(map2, p2, p1);
+  drawMap(map1, p1);
+  drawMap(map2, p2);
 }
 animate();
 
