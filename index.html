@@ -508,6 +508,28 @@ const pitPads = [];
   // Allée des stands : de 3% avant la ligne à 8% après (côté droit = offset négatif)
   const pitRoadMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.9 });
   scene.add(buildRibbonSegment(0.97, 0.08, -(ROAD_HALF + 5), 8, 0.02, pitRoadMat));
+  // MUR PHYSIQUE entre la piste et l'allée des stands (grosse ligne solide côté droit)
+  // sauf aux extrémités (entrée à 0.97 et sortie à 0.08)
+  {
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.7 });
+    const wallH = 1.2;
+    const segLen = SAMPLES * 0.005;
+    for (let frac = 0.975; frac < 0.075 + 1; frac += 0.005) {
+      const si = ((frac % 1) + 1) % 1;
+      // sauter les extrémités (entrée/sortie)
+      let d0 = si; d0 = Math.min(d0, 1 - d0);
+      if (d0 < 0.012) continue; // ouverture entrée/sortie
+      const i = Math.floor(si * SAMPLES) % SAMPLES;
+      const p = samples[i], t = curve.getTangentAt(si);
+      const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(segLen * 1.5, wallH, 0.4), wallMat);
+      wall.position.copy(p).addScaledVector(side, -(ROAD_HALF + 1));
+      wall.position.y = wallH / 2;
+      wall.rotation.y = Math.atan2(-t.z, t.x);
+      wall.castShadow = true;
+      scene.add(wall);
+    }
+  }
   // Lignes délimitant l'allée (orange côté piste, blanche côté extérieur)
   const pitOrangeMat = new THREE.MeshStandardMaterial({ color: 0xff9800, emissive: 0xcc6600, emissiveIntensity: 0.8 });
   const pitWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 });
@@ -1005,7 +1027,7 @@ function makePlayer(kart, startIndex, keys, color, bot) {
     item: null, hit: 0, star: 0, useItem: false,
     lapStart: 0, bestLap: null, lastLap: null,
     qualifTime: null, prevIdx: startIndex, qualifHalf: false,
-    tires: 100, pitTimer: 0, inPit: false, inPitLane: false,
+    tires: 100, pitTimer: 0, inPit: false, inPitLane: false, exploded: false, smokeTimer: 0,
     bot: !!bot,
     color
   };
@@ -1092,12 +1114,16 @@ function botInput(p, dt) {
   const look = Math.floor(10 + Math.abs(p.speed) * 0.55);
   let target = samples[(near.index + look) % SAMPLES];
   // Les bots visent l'allée des stands (côté droit) quand leurs pneus sont usés
-  const needsPit = p.tires < 25;
+  const needsPit = p.tires < 25 && !p.exploded;
   let distToPit = Math.abs(near.index); distToPit = Math.min(distToPit, SAMPLES - distToPit);
-  if (needsPit && distToPit < SAMPLES * 0.1) {
+  if (needsPit && distToPit < SAMPLES * 0.12) {
     const t = curve.getTangentAt(near.index / SAMPLES);
     const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-    target = samples[near.index].clone().addScaledVector(side, -(ROAD_HALF + 4.5)); // centre de l'allée des stands
+    target = samples[near.index].clone().addScaledVector(side, -(ROAD_HALF + 5)); // centre de l'allée des stands
+  }
+  // Si le bot est dans l'allée mais a des pneus neufs, il vise la piste pour ressortir
+  if (p.inPitLane && !needsPit) {
+    target = samples[(near.index + 5) % SAMPLES]; // retour sur la piste
   }
   const desired = Math.atan2(target.x - p.pos.x, target.z - p.pos.z);
   const diff = wrapAngle(desired - p.heading);
@@ -1109,12 +1135,12 @@ function botInput(p, dt) {
   const brakeSharp = botLevel === 2 ? 1.25 : 1.1;
   const brakeSpeed = botLevel === 2 ? 24 : 18;
   const driftSharp = botLevel === 2 ? 0.6 : 0.75;
-  // Si besoin de pneus et proche de la zone de pit, on ralentit pour s'y arrêter
-  if (needsPit && distToPit < SAMPLES * 0.05 && p.inPitLane && Math.abs(p.speed) < 6) {
+  // Si besoin de pneus et dans l'allée des stands, on s'arrête (frein à main)
+  if (needsPit && distToPit < SAMPLES * 0.06 && p.inPitLane && Math.abs(p.speed) < 6) {
     return { up: false, down: true, left: diff > 0.12, right: diff < -0.12, drift: false, useItem: false };
   }
   return {
-    up: !(p.speed >= botMax || (sharp > 0.65 && p.speed > 20)) && !(needsPit && distToPit < SAMPLES * 0.12), // ralentit à l'approche du pit si pneus usés
+    up: !(p.speed >= botMax || (sharp > 0.65 && p.speed > 20)) && !(needsPit && distToPit < SAMPLES * 0.14) && !(p.inPitLane && !needsPit && p.speed >= 15), // repart du pit après changement
     down: sharp > brakeSharp && p.speed > brakeSpeed, // freine dans les épingles
     left: diff > 0.12,
     right: diff < -0.12,
@@ -1303,6 +1329,33 @@ function updatePlayer(p, dt) {
   }
 
   // (usure des pneus gérée par tour, voir logique des checkpoints ci-dessous)
+
+  // Pneus morts (0%) : la voiture fume puis explose
+  if (p.tires <= 0 && raceState === 'racing' && !p.finished && !p.exploded) {
+    // fumée noire continue
+    if (Math.random() < 0.5) {
+      spawnParticle(p.pos.x, 1.2, p.pos.z, 0x222222, 0.8, 1.5);
+      spawnParticle(p.pos.x + (Math.random()-0.5), 0.8, p.pos.z + (Math.random()-0.5), 0x444444, 0.5, 1);
+    }
+    p.smokeTimer = (p.smokeTimer || 0) + dt;
+    p.speed *= Math.max(0, 1 - 2 * dt); // ralentit fortement
+    if (p.smokeTimer > 3) {
+      // EXPLOSION
+      p.exploded = true;
+      p.speed = 0;
+      p.hit = 999; // toupie incontrôlable
+      for (let i = 0; i < 30; i++) {
+        spawnParticle(
+          p.pos.x + (Math.random()-0.5)*3, 1 + Math.random()*2, p.pos.z + (Math.random()-0.5)*3,
+          [0xff4400, 0xffaa00, 0x222222, 0xff0000][i % 4], 0.8 + Math.random(), 2
+        );
+      }
+    }
+  }
+  if (p.exploded) {
+    // reste à l'arrêt, fumée persistante
+    if (Math.random() < 0.3) spawnParticle(p.pos.x, 1, p.pos.z, 0x111111, 1, 2);
+  }
 
   // Zone de stands : si le kart est dans l'allée des stands (à droite) et ralentit, on change les pneus
   p.inPit = false;
