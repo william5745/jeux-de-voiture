@@ -1302,10 +1302,7 @@ function updatePlayer(p, dt) {
     pad.mesh.material.emissive.setHex(pad.cooldown > 0 ? 0x003344 : 0x0088aa);
   }
 
-  // Usure des pneus : diminue avec la distance parcourue
-  if (raceState === 'racing' && !p.finished) {
-    p.tires = Math.max(0, p.tires - Math.abs(p.speed) * dt * 0.018); // usure lente : ~4 tours avant le pit
-  }
+  // (usure des pneus gérée par tour, voir logique des checkpoints ci-dessous)
 
   // Zone de stands : si le kart est dans l'allée des stands (à droite) et ralentit, on change les pneus
   p.inPit = false;
@@ -1363,6 +1360,8 @@ function updatePlayer(p, dt) {
         p.lapStart = raceClock;
         p.lap++;
         p.nextCp = 0;
+        // Usure des pneus par tour : -25% par tour, morts au bout de 4 tours
+        p.tires = Math.max(0, 100 - (p.lap - 1) * 25);
         if (p.lap > TOTAL_LAPS) {
           p.finished = true;
           p.finishTime = raceClock;
