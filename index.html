@@ -1137,7 +1137,9 @@ function updatePlayer(p, dt) {
   p.useItem = false;
 
   if ((raceState === 'racing' && !p.finished) || isQualifActive(p)) {
-    if (up) p.speed += ACCEL * dt;
+    // Pénalité de pneus usés : réduit l'accélération (souple, pas de freinage brutal)
+    const tireAccelFactor = p.tires < 40 ? 0.4 + 0.6 * (p.tires / 40) : 1;
+    if (up) p.speed += ACCEL * dt * tireAccelFactor;
     else if (down) p.speed -= (p.speed > 0 ? BRAKE : ACCEL * 0.6) * dt;
     else p.speed -= Math.sign(p.speed) * Math.min(Math.abs(p.speed), 8 * dt); // frottement
   } else {
@@ -1145,9 +1147,8 @@ function updatePlayer(p, dt) {
   }
 
   const starBonus = p.star > 0 ? 7 : 0; // l'étoile augmente aussi la vitesse max
-  // Usure des pneus : pénalité de vitesse max si pneus usés (< 30%)
-  const tirePenalty = p.tires < 30 ? (30 - p.tires) * 0.25 : 0;
-  const tireMax = MAX_SPEED + starBonus - tirePenalty;
+  // Usure des pneus : vitesse max légèrement réduite (souple, sans à-coup)
+  const tireMax = MAX_SPEED + starBonus - (p.tires < 40 ? (40 - p.tires) * 0.08 : 0);
   p.speed = THREE.MathUtils.clamp(p.speed, -REVERSE_MAX, tireMax);
   if (p.boost > 0) { p.speed = Math.min(p.speed + 30 * dt, MAX_SPEED + 14 + starBonus); p.boost -= dt; }
 
@@ -1304,12 +1305,12 @@ function updatePlayer(p, dt) {
 /* ============================= CAMÉRAS / HUD ============================= */
 function updateCamera(cam, p) {
   const behind = new THREE.Vector3(
-    p.pos.x - Math.sin(p.heading) * 9,
-    p.pos.y + 5.2,
-    p.pos.z - Math.cos(p.heading) * 9
+    p.pos.x - Math.sin(p.heading) * 6.5,
+    p.pos.y + 3.8,
+    p.pos.z - Math.cos(p.heading) * 6.5
   );
   cam.position.lerp(behind, 0.12);
-  cam.lookAt(p.pos.x + Math.sin(p.heading) * 6, p.pos.y + 1, p.pos.z + Math.cos(p.heading) * 6);
+  cam.lookAt(p.pos.x + Math.sin(p.heading) * 4, p.pos.y + 1, p.pos.z + Math.cos(p.heading) * 4);
 }
 
 const hud1 = document.getElementById('hud1');
