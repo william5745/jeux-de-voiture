@@ -52,7 +52,7 @@
 <div id="hud2" class="hud">🔵 J2 — Tour 1/3</div>
 <div id="music-hud" class="hud">🎵</div>
 <div id="msg" class="hud"></div>
-<div id="help" class="hud">J1 : Z Q S D + Espace (drift) + A (objet) &nbsp;|&nbsp; J2 : Flèches + Maj droite (drift) + Entrée (objet) &nbsp;|&nbsp; 4 bots &nbsp;|&nbsp; M = musique on/off &nbsp;|&nbsp; N = moteur F1 on/off &nbsp;|&nbsp; 3 tours !</div>
+<div id="help" class="hud">J1 : Z Q S D + Espace (drift) + A (objet) &nbsp;|&nbsp; J2 : Flèches + Maj droite (drift) + Entrée (objet) &nbsp;|&nbsp; 4 bots &nbsp;|&nbsp; M = musique on/off &nbsp;|&nbsp; 3 tours !</div>
 <canvas id="map1" class="minimap" width="180" height="180"></canvas>
 <canvas id="map2" class="minimap" width="180" height="180"></canvas>
 <div id="menu">
@@ -54191,75 +54191,12 @@ const Music = {
   }
 };
 
-/* ============================= SON MOTEUR F1 (Web Audio API) ============================= */
-const MoteurF1 = {
-  ctx: null, osc1: null, osc2: null, osc3: null, gain: null, lfo: null, lfoGain: null,
-  running: false, muted: false,
-  init() {
-    if (this.ctx) return;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    this.ctx = new AC();
-    // Onde principale + harmoniques pour un son de moteur riche
-    this.osc1 = this.ctx.createOscillator();
-    this.osc1.type = 'sawtooth';
-    this.osc2 = this.ctx.createOscillator();
-    this.osc2.type = 'square';
-    this.osc3 = this.ctx.createOscillator();
-    this.osc3.type = 'sawtooth';
-    // LFO pour la vibration du moteur
-    this.lfo = this.ctx.createOscillator();
-    this.lfo.type = 'sine';
-    this.lfo.frequency.value = 30;
-    this.lfoGain = this.ctx.createGain();
-    this.lfoGain.gain.value = 8;
-    this.lfo.connect(this.lfoGain);
-    // Filtre passe-bas pour adoucir le son
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 1200;
-    filter.Q.value = 2;
-    // Gain principal
-    this.gain = this.ctx.createGain();
-    this.gain.gain.value = 0.0;
-    this.osc1.connect(filter);
-    this.osc2.connect(filter);
-    this.osc3.connect(filter);
-    filter.connect(this.gain);
-    this.gain.connect(this.ctx.destination);
-    this.lfoGain.connect(this.osc1.frequency);
-    this.osc1.start();
-    this.osc2.start();
-    this.osc3.start();
-    this.lfo.start();
-    this.running = true;
-  },
-  // Met à jour le son selon la vitesse du kart (0..1 normalisé)
-  update(vitesse) {
-    if (!this.ctx || !this.running) return;
-    if (this.ctx.state === 'suspended') this.ctx.resume();
-    const v = Math.min(1, Math.abs(vitesse) / 34); // normalisé 0..1
-    const baseFreq = 60 + v * 320; // fréquence de base selon la vitesse
-    const t = this.ctx.currentTime;
-    this.osc1.frequency.setTargetAtTime(baseFreq, t, 0.05);
-    this.osc2.frequency.setTargetAtTime(baseFreq * 2.01, t, 0.05); // harmonique aiguë
-    this.osc3.frequency.setTargetAtTime(baseFreq * 0.5, t, 0.05);  // sous-harmonique grave
-    this.lfo.frequency.setTargetAtTime(20 + v * 80, t, 0.1);
-    const vol = this.muted ? 0 : 0.04 + v * 0.12;
-    this.gain.gain.setTargetAtTime(vol, t, 0.08);
-  },
-  toggleMute() {
-    this.muted = !this.muted;
-    if (this.gain) this.gain.gain.setTargetAtTime(this.muted ? 0 : 0.1, this.ctx.currentTime, 0.05);
-  }
-};
-
 /* ============================= MENU ============================= */
 const menuEl = document.getElementById('menu');
 function startRace(level) {
   botLevel = level;
   menuEl.classList.add('hidden');
   Music.start();
-  MoteurF1.init(); // démarre le son de moteur F1
   startQualif(); // qualification automatique avant chaque course
 }
 function startQualif() {
@@ -54293,8 +54230,7 @@ menuEl.querySelectorAll('button').forEach(btn => {
 window.addEventListener('keydown', e => {
   if (raceState === 'menu' && (e.key === '1' || e.key === '2')) startRace(Number(e.key));
   if (raceState === 'qualifResults') startRaceFromQualif(); // n'importe quelle touche lance la course
-  if (e.key === 'm' || e.key === 'M') Music.toggleMute(); // M = couper/remettre la musique
-  if (e.key === 'n' || e.key === 'N') MoteurF1.toggleMute(); // N = couper/remettre le moteur
+  if (e.key === 'm' || e.key === 'M') Music.toggleMute(); // M = couper/remettre le son
 });
 // Si la lecture a été bloquée par le navigateur, chaque clic la relance
 window.addEventListener('pointerdown', () => { if (raceState !== 'menu' && Music.audio && Music.audio.paused) Music.start(); });
@@ -54323,9 +54259,6 @@ function animate() {
 
   if (raceState !== 'menu') for (const p of players) updatePlayer(p, dt);
   updateParticles(dt);
-
-  // Son du moteur F1 selon la vitesse du joueur 1
-  if (raceState !== 'menu') MoteurF1.update(p1.speed);
 
   // Caisses "?" : rotation + réapparition
   for (const b of itemBoxes) {

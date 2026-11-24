@@ -54,17 +54,20 @@
 <div id="hud2" class="hud">🔵 J2 — Tour 1/3</div>
 <div id="music-hud" class="hud">🎵</div>
 <div id="msg" class="hud"></div>
-<div id="help" class="hud">J1 : Z Q S D + Espace (drift) + A (objet) &nbsp;|&nbsp; J2 : Flèches + Maj droite (drift) + Entrée (objet) &nbsp;|&nbsp; 4 bots &nbsp;|&nbsp; M = musique on/off &nbsp;|&nbsp; N = moteur F1 on/off &nbsp;|&nbsp; 3 tours !</div>
+<div id="help" class="hud">J1 : Z Q S D + Espace (drift) + A (objet) &nbsp;|&nbsp; J2 : Flèches + Maj droite (drift) + Entrée (objet) &nbsp;|&nbsp; 4 bots &nbsp;|&nbsp; M = musique on/off &nbsp;|&nbsp; 3 tours !</div>
 <canvas id="map1" class="minimap" width="180" height="180"></canvas>
 <canvas id="map2" class="minimap" width="180" height="180"></canvas>
 <div id="menu">
   <h1>🏁 Turbo Circuit</h1>
+  <p id="menu-circuit">Circuit actuel : <strong id="menu-circuit-name"></strong></p>
+  <p>Choisis un autre circuit :</p>
+  <div class="menu-btns" id="circuit-btns"></div>
   <p>Choisis le niveau des bots : (⏱️ qualification automatique avant la course)</p>
   <div class="menu-btns">
     <button data-level="1">🤖 Niveau 1 — Facile</button>
     <button data-level="2">🤖 Niveau 2 — Difficile</button>
   </div>
-  <p>(ou appuie sur 1 ou 2)</p>
+  <p>(touches 1-4 = circuit • F = facile • D = difficile)</p>
 </div>
 
 <script type="module">
@@ -143,12 +146,47 @@ sun.shadow.camera.far = 500;
 scene.add(sun);
 
 /* ============================= CIRCUIT ============================= */
-// Tracé du circuit (boucle fermée)
-const trackPoints = [
-  [0, -90], [70, -95], [130, -70], [150, -20], [130, 30], [150, 80],
-  [110, 120], [40, 105], [10, 130], [-50, 125], [-100, 95], [-130, 60],
-  [-110, 10], [-140, -40], [-90, -70]
-].map(([x, z]) => new THREE.Vector3(x, 0, z));
+// Plusieurs circuits au choix (boucles fermées)
+const CIRCUITS = [
+  {
+    name: '🏁 Le Mans',
+    points: [
+      [0, -90], [70, -95], [130, -70], [150, -20], [130, 30], [150, 80],
+      [110, 120], [40, 105], [10, 130], [-50, 125], [-100, 95], [-130, 60],
+      [-110, 10], [-140, -40], [-90, -70]
+    ]
+  },
+  {
+    name: '🐍 Le Serpent',
+    points: [
+      [0, -100], [60, -80], [30, -40], [80, -10], [40, 30], [90, 60],
+      [50, 95], [0, 80], [-40, 110], [-90, 80], [-60, 40], [-110, 10],
+      [-70, -30], [-120, -60], [-60, -90]
+    ]
+  },
+  {
+    name: '🥚 L\'Ovale Turbo',
+    points: [
+      [0, -110], [80, -105], [140, -70], [160, -10], [150, 50],
+      [110, 100], [40, 115], [-40, 110], [-110, 85], [-150, 40],
+      [-160, -20], [-140, -75], [-80, -108]
+    ]
+  },
+  {
+    name: '🏜️ Le Canyon',
+    points: [
+      [0, -80], [50, -95], [110, -80], [130, -40], [100, -10],
+      [140, 20], [110, 55], [60, 45], [30, 80], [-20, 70],
+      [-50, 100], [-100, 90], [-120, 50], [-90, 20], [-130, -10],
+      [-100, -50], [-50, -60]
+    ]
+  }
+];
+// Circuit choisi (stocké en localStorage, 0 par défaut)
+const circuitIndex = Math.max(0, Math.min(CIRCUITS.length - 1, parseInt(localStorage.getItem('turboCircuit') || '0')));
+const trackPoints = CIRCUITS[circuitIndex].points.map(([x, z]) => new THREE.Vector3(x, 0, z));
+// Met à jour le titre de la page avec le nom du circuit
+document.title = 'Turbo Circuit — ' + CIRCUITS[circuitIndex].name;
 
 const curve = new THREE.CatmullRomCurve3(trackPoints, true, 'catmullrom', 0.6);
 const SAMPLES = 600;
@@ -1151,75 +1189,28 @@ const Music = {
   }
 };
 
-/* ============================= SON MOTEUR F1 (Web Audio API) ============================= */
-const MoteurF1 = {
-  ctx: null, osc1: null, osc2: null, osc3: null, gain: null, lfo: null, lfoGain: null,
-  running: false, muted: false,
-  init() {
-    if (this.ctx) return;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    this.ctx = new AC();
-    // Onde principale + harmoniques pour un son de moteur riche
-    this.osc1 = this.ctx.createOscillator();
-    this.osc1.type = 'sawtooth';
-    this.osc2 = this.ctx.createOscillator();
-    this.osc2.type = 'square';
-    this.osc3 = this.ctx.createOscillator();
-    this.osc3.type = 'sawtooth';
-    // LFO pour la vibration du moteur
-    this.lfo = this.ctx.createOscillator();
-    this.lfo.type = 'sine';
-    this.lfo.frequency.value = 30;
-    this.lfoGain = this.ctx.createGain();
-    this.lfoGain.gain.value = 8;
-    this.lfo.connect(this.lfoGain);
-    // Filtre passe-bas pour adoucir le son
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 1200;
-    filter.Q.value = 2;
-    // Gain principal
-    this.gain = this.ctx.createGain();
-    this.gain.gain.value = 0.0;
-    this.osc1.connect(filter);
-    this.osc2.connect(filter);
-    this.osc3.connect(filter);
-    filter.connect(this.gain);
-    this.gain.connect(this.ctx.destination);
-    this.lfoGain.connect(this.osc1.frequency);
-    this.osc1.start();
-    this.osc2.start();
-    this.osc3.start();
-    this.lfo.start();
-    this.running = true;
-  },
-  // Met à jour le son selon la vitesse du kart (0..1 normalisé)
-  update(vitesse) {
-    if (!this.ctx || !this.running) return;
-    if (this.ctx.state === 'suspended') this.ctx.resume();
-    const v = Math.min(1, Math.abs(vitesse) / 34); // normalisé 0..1
-    const baseFreq = 60 + v * 320; // fréquence de base selon la vitesse
-    const t = this.ctx.currentTime;
-    this.osc1.frequency.setTargetAtTime(baseFreq, t, 0.05);
-    this.osc2.frequency.setTargetAtTime(baseFreq * 2.01, t, 0.05); // harmonique aiguë
-    this.osc3.frequency.setTargetAtTime(baseFreq * 0.5, t, 0.05);  // sous-harmonique grave
-    this.lfo.frequency.setTargetAtTime(20 + v * 80, t, 0.1);
-    const vol = this.muted ? 0 : 0.04 + v * 0.12;
-    this.gain.gain.setTargetAtTime(vol, t, 0.08);
-  },
-  toggleMute() {
-    this.muted = !this.muted;
-    if (this.gain) this.gain.gain.setTargetAtTime(this.muted ? 0 : 0.1, this.ctx.currentTime, 0.05);
-  }
-};
-
 /* ============================= MENU ============================= */
 const menuEl = document.getElementById('menu');
+
+// Remplit les boutons de sélection du circuit
+const circuitBtnsEl = document.getElementById('circuit-btns');
+document.getElementById('menu-circuit-name').textContent = CIRCUITS[circuitIndex].name;
+CIRCUITS.forEach((c, i) => {
+  const btn = document.createElement('button');
+  btn.textContent = c.name;
+  btn.dataset.circuit = i;
+  if (i === circuitIndex) btn.style.background = 'rgba(46, 204, 113, .9)';
+  btn.addEventListener('click', () => {
+    localStorage.setItem('turboCircuit', i);
+    location.reload();
+  });
+  circuitBtnsEl.appendChild(btn);
+});
+
 function startRace(level) {
   botLevel = level;
   menuEl.classList.add('hidden');
   Music.start();
-  MoteurF1.init(); // démarre le son de moteur F1
   startQualif(); // qualification automatique avant chaque course
 }
 function startQualif() {
@@ -1247,14 +1238,24 @@ function startRaceFromQualif() {
   raceState = 'countdown';
   countdown = 3.999;
 }
-menuEl.querySelectorAll('button').forEach(btn => {
+menuEl.querySelectorAll('button[data-level]').forEach(btn => {
   btn.addEventListener('click', () => startRace(Number(btn.dataset.level)));
 });
 window.addEventListener('keydown', e => {
-  if (raceState === 'menu' && (e.key === '1' || e.key === '2')) startRace(Number(e.key));
+  if (raceState === 'menu') {
+    const k = e.key.toLowerCase();
+    if (k >= '1' && k <= '4') {
+      const idx = Number(k) - 1;
+      if (idx < CIRCUITS.length && idx !== circuitIndex) {
+        localStorage.setItem('turboCircuit', idx);
+        location.reload();
+      }
+    }
+    if (k === 'f') startRace(1);
+    if (k === 'd') startRace(2);
+  }
   if (raceState === 'qualifResults') startRaceFromQualif(); // n'importe quelle touche lance la course
-  if (e.key === 'm' || e.key === 'M') Music.toggleMute(); // M = couper/remettre la musique
-  if (e.key === 'n' || e.key === 'N') MoteurF1.toggleMute(); // N = couper/remettre le moteur
+  if (e.key === 'm' || e.key === 'M') Music.toggleMute(); // M = couper/remettre le son
 });
 // Si la lecture a été bloquée par le navigateur, chaque clic la relance
 window.addEventListener('pointerdown', () => { if (raceState !== 'menu' && Music.audio && Music.audio.paused) Music.start(); });
@@ -1283,9 +1284,6 @@ function animate() {
 
   if (raceState !== 'menu') for (const p of players) updatePlayer(p, dt);
   updateParticles(dt);
-
-  // Son du moteur F1 selon la vitesse du joueur 1
-  if (raceState !== 'menu') MoteurF1.update(p1.speed);
 
   // Caisses "?" : rotation + réapparition
   for (const b of itemBoxes) {
@@ -1360,7 +1358,7 @@ function animate() {
       ? (p.qualifTime !== null ? `⏱️ qualif ${p.qualifTime.toFixed(1)}s ✓` : isQualifActive(p) ? `⏱️ qualif — ${qualifClock.toFixed(1)}s` : '⏱️ en attente…')
       : `Tour ${p.lap}/${TOTAL_LAPS} — ${Math.abs(p.speed * 3.6).toFixed(0)} km/h`
         + (p.bestLap !== null ? ` — ⏱️ record ${p.bestLap.toFixed(1)}s` : '');
-  hud1.textContent = `🔴 J1 — ${fmt(p1)}${p1.item ? '  ' + p1.item.icon : ''}${p1.star > 0 ? ' ✨' : ''}`;
+  hud1.textContent = `${CIRCUITS[circuitIndex].name} — 🔴 J1 — ${fmt(p1)}${p1.item ? '  ' + p1.item.icon : ''}${p1.star > 0 ? ' ✨' : ''}`;
   hud2.textContent = `🔵 J2 — ${fmt(p2)}${p2.item ? '  ' + p2.item.icon : ''}${p2.star > 0 ? ' ✨' : ''}`;
   if (raceState === 'finished') {
     let winner = players[0];
