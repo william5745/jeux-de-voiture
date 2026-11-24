@@ -1272,9 +1272,9 @@ function updatePlayer(p, dt) {
   const lateral = (p.pos.x - nearP.x) * nearSide.x + (p.pos.z - nearP.z) * nearSide.z;
   // Zone de pit : autour de la ligne de départ (index ~0)
   let dStart = Math.abs(near.index); dStart = Math.min(dStart, SAMPLES - dStart);
-  const inPitZone = dStart < SAMPLES * 0.08;
-  const PIT_LANE_INNER = -(ROAD_HALF + 1.5);  // bord piste côté allée
-  const PIT_LANE_OUTER = -(ROAD_HALF + 7.5);  // mur extérieur de l'allée
+  const inPitZone = dStart < SAMPLES * 0.11;
+  const PIT_LANE_INNER = -(ROAD_HALF + 0.5);  // chevauche le bord de piste pour laisser entrer
+  const PIT_LANE_OUTER = -(ROAD_HALF + 9);    // mur extérieur de l'allée
 
   if (inPitZone && lateral < PIT_LANE_INNER && lateral > PIT_LANE_OUTER) {
     // Dans l'allée des stands :autorisé, pas de mur
