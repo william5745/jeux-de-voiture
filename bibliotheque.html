@@ -98,6 +98,18 @@
   document.querySelector('.obj-item').classList.add('active');
 </script>
 
+<script>
+  window.addEventListener('error', e => {
+    const d = document.getElementById('debug-err') || (() => {
+      const el = document.createElement('div');
+      el.id = 'debug-err';
+      el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c00;color:#fff;font:12px monospace;padding:6px;z-index:999;white-space:pre';
+      document.body.appendChild(el);
+      return el;
+    })();
+    d.textContent = 'ERREUR: ' + e.message + ' @ ' + (e.filename||'').split('/').pop() + ':' + e.lineno;
+  });
+</script>
 <script type="importmap">
 { "imports": { "three": "./three.module.js" } }
 </script>
@@ -167,6 +179,9 @@ renderer.domElement.addEventListener('wheel', e => {
 }, { passive: false });
 renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
 
+/* ================== BIBLIOTHÈQUE D'OBJETS ================== */
+let currentObject = null;
+
 function animate() {
   requestAnimationFrame(animate);
   camera.position.setFromSpherical(spherical).add(target);
@@ -181,9 +196,6 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(viewer.clientWidth, viewer.clientHeight);
 });
-
-/* ================== BIBLIOTHÈQUE D'OBJETS ================== */
-let currentObject = null;
 
 const library = {
   kart: {
