@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bibliothèque d'objets — Turbo Circuit</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
+    font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: #eee; }
+  #app { display: flex; height: 100%; }
+  /* ---- Panneau latéral gauche : liste des objets ---- */
+  #sidebar { width: 280px; min-width: 280px; background: #16213e; border-right: 1px solid #0f3460;
+    display: flex; flex-direction: column; }
+  #sidebar h1 { font-size: 18px; padding: 16px; margin: 0; background: #0f3460; color: #ffe14d; }
+  #categories { flex: 1; overflow-y: auto; padding: 8px; }
+  .cat-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #8ab4f8;
+    margin: 12px 8px 4px; }
+  .obj-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin: 2px 0;
+    border-radius: 8px; cursor: pointer; transition: background 0.15s; }
+  .obj-item:hover { background: #1f3a6e; }
+  .obj-item.active { background: #e94560; color: #fff; }
+  .obj-item .icon { font-size: 22px; width: 30px; text-align: center; }
+  .obj-item .name { font-size: 14px; }
+  /* ---- Zone centrale : vue 3D ---- */
+  #viewer { flex: 1; position: relative; }
+  #viewer canvas { display: block; }
+  #obj-label { position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.6); padding: 8px 24px; border-radius: 20px; font-size: 20px;
+    font-weight: bold; color: #ffe14d; pointer-events: none; }
+  #hint { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    font-size: 12px; color: rgba(255,255,255,0.6); pointer-events: none; }
+  /* ---- Panneau droit : propriétés ---- */
+  #props { width: 300px; min-width: 300px; background: #16213e; border-left: 1px solid #0f3460;
+    padding: 16px; overflow-y: auto; }
+  #props h2 { font-size: 16px; margin: 0 0 12px; color: #ffe14d; }
+  .prop-row { margin-bottom: 10px; }
+  .prop-row label { display: block; font-size: 12px; color: #8ab4f8; margin-bottom: 3px; }
+  .prop-row input[type="range"] { width: 100%; }
+  .prop-row input[type="color"] { width: 100%; height: 30px; border: none; border-radius: 6px;
+    cursor: pointer; background: none; }
+  .prop-row .val { font-size: 12px; color: #ccc; float: right; }
+  .prop-row select { width: 100%; padding: 6px; border-radius: 6px; background: #0f3460;
+    color: #eee; border: 1px solid #1f3a6e; }
+  #actions { margin-top: 16px; display: flex; gap: 8px; }
+  #actions button { flex: 1; padding: 8px; border: none; border-radius: 8px; cursor: pointer;
+    font-weight: bold; font-size: 13px; }
+  #btn-reset { background: #0f3460; color: #eee; }
+  #btn-random { background: #e94560; color: #fff; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./three.module.js" } }
+</script>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <h1>📦 Bibliothèque d'objets</h1>
+    <div id="categories"></div>
+  </div>
+  <div id="viewer">
+    <div id="obj-label"></div>
+    <div id="hint">🖱️ Glisser pour tourner · Molette pour zoomer · Clic droit pour déplacer</div>
+  </div>
+  <div id="props">
+    <h2>⚙️ Propriétés</h2>
+    <div id="prop-list"></div>
+    <div id="actions">
+      <button id="btn-reset">Réinitialiser</button>
+      <button id="btn-random">Aléatoire</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* ================== SCÈNE 3D ================== */
+const viewer = document.getElementById('viewer');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(viewer.clientWidth, viewer.clientHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+viewer.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a2e);
+scene.fog = new THREE.Fog(0x1a1a2e, 30, 80);
+
+const camera = new THREE.PerspectiveCamera(50, viewer.clientWidth / viewer.clientHeight, 0.1, 200);
+camera.position.set(6, 5, 8);
+
+// Lumières
+scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(10, 20, 10);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(2048, 2048);
+scene.add(dirLight);
+const fill = new THREE.DirectionalLight(0x8ab4f8, 0.4);
+fill.position.set(-10, 10, -10);
+scene.add(fill);
+
+// Sol grille
+const grid = new THREE.GridHelper(40, 20, 0x0f3460, 0x1f3a6e);
+scene.add(grid);
+const floor = new THREE.Mesh(
+  new THREE.CircleGeometry(20, 32),
+  new THREE.MeshStandardMaterial({ color: 0x16213e, roughness: 0.9 })
+);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -0.01;
+floor.receiveShadow = true;
+scene.add(floor);
+
+// Orbit controls (manuel, sans dépendance externe)
+let target = new THREE.Vector3(0, 1, 0);
+let spherical = new THREE.Spherical(10, Math.PI / 3, Math.atan2(8, 6));
+let isDragging = false, isRightDrag = false;
+let px = 0, py = 0;
+renderer.domElement.addEventListener('mousedown', e => {
+  isDragging = true; isRightDrag = (e.button === 2); px = e.clientX; py = e.clientY;
+});
+window.addEventListener('mouseup', () => { isDragging = false; });
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  const dx = e.clientX - px, dy = e.clientY - py;
+  px = e.clientX; py = e.clientY;
+  if (isRightDrag) {
+    const panSpeed = spherical.radius * 0.001;
+    const right = new THREE.Vector3().crossVectors(camera.position.clone().sub(target), camera.up).normalize();
+    const up = camera.up.clone();
+    target.addScaledVector(right, -dx * panSpeed).addScaledVector(up, dy * panSpeed);
+  } else {
+    spherical.theta -= dx * 0.005;
+    spherical.phi = THREE.MathUtils.clamp(spherical.phi - dy * 0.005, 0.1, Math.PI - 0.1);
+  }
+});
+renderer.domElement.addEventListener('wheel', e => {
+  e.preventDefault();
+  spherical.radius = THREE.MathUtils.clamp(spherical.radius + e.deltaY * 0.01, 3, 40);
+}, { passive: false });
+renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+
+// Boucle de rendu
+function animate() {
+  requestAnimationFrame(animate);
+  camera.position.setFromSpherical(spherical).add(target);
+  camera.lookAt(target);
+  if (currentObject) currentObject.rotation.y += 0.005;
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+  camera.aspect = viewer.clientWidth / viewer.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(viewer.clientWidth, viewer.clientHeight);
+});
+
+/* ================== BIBLIOTHÈQUE D'OBJETS ================== */
+let currentObject = null;
+let currentDef = null;
+
+function clearCurrent() {
+  if (currentObject) { scene.remove(currentObject); currentObject = null; }
+}
+
+function showObject(def) {
+  clearCurrent();
+  currentDef = def;
+  currentObject = def.build(def.params);
+  currentObject.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  scene.add(currentObject);
+  document.getElementById('obj-label').textContent = def.icon + ' ' + def.name;
+  buildPropsPanel(def);
+  document.querySelectorAll('.obj-item').forEach(el =>
+    el.classList.toggle('active', el.dataset.id === def.id));
+}
+
+/* ---- Définitions des objets ---- */
+const library = [
+  {
+    cat: 'Véhicules',
+    items: [
+      {
+        id: 'kart', icon: '🏎️', name: 'Kart de course',
+        params: { color: '#e53935', scale: 1 },
+        build: p => {
+          const g = new THREE.Group();
+          const bodyMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.35, metalness: 0.4 });
+          const darkMat = new THREE.MeshStandardMaterial({ color: 0x1c1c22, roughness: 0.6 });
+          const body = new THREE.Mesh(new THREE.BoxGeometry(2, 0.7, 3.4), bodyMat);
+          body.position.y = 0.6;
+          const nose = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.45, 0.9), bodyMat);
+          nose.position.set(0, 0.45, 2);
+          const bumper = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.3, 0.3), darkMat);
+          bumper.position.set(0, 0.35, 2.4);
+          const spoiler = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.15, 0.6), bodyMat);
+          spoiler.position.set(0, 1.35, -1.75);
+          const strutG = new THREE.BoxGeometry(0.15, 0.5, 0.15);
+          [-0.7, 0.7].forEach(x => {
+            const s = new THREE.Mesh(strutG, darkMat); s.position.set(x, 1.05, -1.7); g.add(s);
+          });
+          const seat = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.5, 0.4), darkMat);
+          seat.position.set(0, 0.95, -0.7);
+          const driver = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 10),
+            new THREE.MeshStandardMaterial({ color: 0xffd9b3 }));
+          driver.position.set(0, 1.4, -0.2);
+          const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.58, 12, 10, 0, Math.PI * 2, 0, Math.PI / 2),
+            new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.25, metalness: 0.3 }));
+          helmet.position.set(0, 1.47, -0.2);
+          const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff8c9, emissive: 0xffee88, emissiveIntensity: 1.2 });
+          [-0.6, 0.6].forEach(x => {
+            const hl = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 6), lightMat);
+            hl.position.set(x, 0.6, 2.42); g.add(hl);
+          });
+          const tailMat = new THREE.MeshStandardMaterial({ color: 0xff2222, emissive: 0xaa0000, emissiveIntensity: 0.8 });
+          [-0.6, 0.6].forEach(x => {
+            const tl = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.18, 0.1), tailMat);
+            tl.position.set(x, 0.65, -1.72); g.add(tl);
+          });
+          g.add(body, nose, bumper, spoiler, seat, driver, helmet);
+          const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
+          const hubMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8, roughness: 0.3 });
+          [[-1, 1.1], [1, 1.1], [-1, -1.1], [1, -1.1]].forEach(([x, z]) => {
+            const w = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.4, 12), wheelMat);
+            w.rotation.z = Math.PI / 2; w.position.set(x, 0.45, z); g.add(w);
+            const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.42, 8), hubMat);
+            hub.rotation.z = Math.PI / 2; hub.position.copy(w.position); g.add(hub);
+          });
+          const flame = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.6, 8),
+            new THREE.MeshBasicMaterial({ color: 0xff9100, transparent: true, opacity: 0.9 }));
+          flame.rotation.x = -Math.PI / 2; flame.position.set(0, 0.7, -2.4); flame.visible = false; g.add(flame);
+          g.scale.setScalar(p.scale);
+          return g;
+        }
+      },
+    ]
+  },
+  {
+    cat: 'Nature',
+    items: [
+      {
+        id: 'tree', icon: '🌲', name: 'Arbre (pin)',
+        params: { trunkColor: '#7a4a21', leafColor: '#2e7d32', scale: 1 },
+        build: p => {
+          const g = new THREE.Group();
+          const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 3, 6),
+            new THREE.MeshStandardMaterial({ color: new THREE.Color(p.trunkColor) }));
+          trunk.position.y = 1.5;
+          const leaves = new THREE.Mesh(new THREE.ConeGeometry(2.4, 5, 8),
+            new THREE.MeshStandardMaterial({ color: new THREE.Color(p.leafColor) }));
+          leaves.position.y = 5;
+          g.add(trunk, leaves); g.scale.setScalar(p.scale);
+          return g;
+        }
+      },
+      {
+        id: 'bush', icon: '🌿', name: 'Buisson',
+        params: { color: '#388e3c', scale: 1 },
+        build: p => {
+          const b = new THREE.Mesh(new THREE.SphereGeometry(1.5, 8, 6),
+            new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 1, flatShading: true }));
+          b.scale.y = 0.7; b.position.y = 0.8; b.scale.x *= p.scale; b.scale.z *= p.scale;
+          return b;
+        }
+      },
+      {
+        id: 'flower', icon: '🌸', name: 'Fleur',
+        params: { color: '#ff6f91', scale: 1 },
+        build: p => {
+          const g = new THREE.Group();
+          const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.5, 6),
+            new THREE.MeshStandardMaterial({ color: 0x2e7d32 }));
+          stem.position.y = 0.25;
+          const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6),
+            new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.8 }));
+          head.position.y = 0.55;
+          g.add(stem, head); g.scale.setScalar(p.scale);
+          return g;
+        }
+      },
+    ]
+  },
+  {
+    cat: 'Circuit',
+    items: [
+      {
+        id: 'barrier', icon: '🚧', name: 'Barrière',
+        params: { scale: 1 },
+        build: p => {
+          const g = new THREE.Group();
+          const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 });
+          const stripeMat = new THREE.MeshStandardMaterial({ color: 0xd8342c, roughness: 0.7 });
+          for (let i = 0; i < 4; i++) {
+            const seg = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.15), i % 2 ? stripeMat : mat);
+            seg.position.set(i * 1.2 - 1.8, 0.4, 0);
+            g.add(seg);
+          }
+          const postG = new THREE.CylinderGeometry(0.08, 0.08, 0.8, 6);
+          [-1.8, 1.8].forEach(x => {
+            const post = new THREE.Mesh(postG, new THREE.MeshStandardMaterial({ color: 0x555555 }));
+            post.position.set(x, 0.4, -0.15); g.add(post);
+          });
+          g.scale.setScalar(p.scale);
+          return g;
+        }
+      },
+      {
+        id: 'itembox', icon: '❓', name: 'Boîte objet',
+        params: { scale: 1 },
+        build: p => {
+          const tex = (() => {
+            const c = document.createElement('canvas'); c.width = c.height = 128;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#ffb300'; ctx.fillRect(0, 0, 128, 128);
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; ctx.strokeRect(4, 4, 120, 120);
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 80px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('?', 64, 70);
+            return new THREE.CanvasTexture(c);
+          })();
+          const m = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.8, 1.8),
+            new THREE.MeshStandardMaterial({ map: tex, emissive: 0x664400 }));
+          m.position.y = 0.9; m.scale.setScalar(p.scale);
+          return m;
+        }
+      },
+      {
+        id: 'boost', icon: '⚡', name: 'Zone de boost',
+        params: { width: 8, length: 5 },
+        build: p => {
+          const m = new THREE.Mesh(new THREE.PlaneGeometry(p.width, p.length),
+            new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x0088aa, transparent: true, opacity: 0.7 }));
+          m.rotation.x = -Math.PI / 2; m.position.y = 0.05;
+          return m;
+        }
+      },
+      {
+        id: 'arch', icon: '🎪', name: 'Arche de départ',
+        params: { color: '#d8342c', width: 12 },
+        build: p => {
+          const g = new THREE.Group();
+          const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.5 });
+          const postG = new THREE.CylinderGeometry(0.5, 0.5, 9, 10);
+          [-1, 1].forEach(s => {
+            const post = new THREE.Mesh(postG, mat);
+            post.position.set(s * (p.width / 2), 4.5, 0); g.add(post);
+          });
+          const banner = new THREE.Mesh(new THREE.BoxGeometry(p.width + 1.2, 1.6, 0.4), mat);
+          banner.position.y = 8.5; g.add(banner);
+          return g;
+        }
+      },
+    ]
+  },
+  {
+    cat: 'Décor',
+    items: [
+      {
+        id: 'cloud', icon: '☁️', name: 'Nuage',
+        params: { scale: 1 },
+        build: p => {
+          const g = new THREE.Group();
+          const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true });
+          for (let j = 0; j < 4; j++) {
+            const s = new THREE.Mesh(new THREE.SphereGeometry(3 + j * 1.5, 7, 6), mat);
+            s.position.set(j * 4 - 6, Math.random() * 1.5, Math.random() * 2);
+            g.add(s);
+          }
+          g.scale.setScalar(p.scale); g.position.y = 5;
+          return g;
+        }
+      },
+      {
+        id: 'mountain', icon: '⛰️', name: 'Montagne',
+        params: { color: '#7d9b76', height: 30, scale: 1 },
+        build: p => {
+          const m = new THREE.Mesh(new THREE.ConeGeometry(20 * p.scale, p.height, 5),
+            new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 1, flatShading: true }));
+          m.position.y = p.height / 2;
+          return m;
+        }
+      },
+      {
+        id: 'stand', icon: '👥', name: 'Tribune',
+        params: { color: '#9e9e9e', rows: 5, scale: 1 },
+        build: p => {
+          const g = new THREE.Group();
+          const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.9 });
+          for (let r = 0; r < p.rows; r++) {
+            const step = new THREE.Mesh(new THREE.BoxGeometry(8, 0.5, 1.3), mat);
+            step.position.set(0, 0.25 + r * 0.5, -r * 1.3); g.add(step);
+          }
+          const roof = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.25, p.rows * 1.1 + 1.6),
+            new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.6 }));
+          roof.position.set(0, 0.5 + p.rows * 0.5, -p.rows * 0.65); g.add(roof);
+          g.scale.setScalar(p.scale);
+          return g;
+        }
+      },
+    ]
+  },
+];
+
+/* ---- Construction du panneau latéral ---- */
+const catDiv = document.getElementById('categories');
+library.forEach(cat => {
+  const title = document.createElement('div');
+  title.className = 'cat-title';
+  title.textContent = cat.cat;
+  catDiv.appendChild(title);
+  cat.items.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'obj-item';
+    el.dataset.id = item.id;
+    el.innerHTML = `<span class="icon">${item.icon}</span><span class="name">${item.name}</span>`;
+    el.addEventListener('click', () => showObject(item));
+    catDiv.appendChild(el);
+  });
+});
+
+/* ---- Panneau de propriétés ---- */
+function buildPropsPanel(def) {
+  const list = document.getElementById('prop-list');
+  list.innerHTML = '';
+  Object.entries(def.params).forEach(([key, val]) => {
+    const row = document.createElement('div');
+    row.className = 'prop-row';
+    const label = document.createElement('label');
+    label.textContent = key;
+    if (typeof val === 'string' && val.startsWith('#')) {
+      const input = document.createElement('input');
+      input.type = 'color'; input.value = val;
+      input.addEventListener('input', () => { def.params[key] = input.value; showObject(def); });
+      row.appendChild(label); row.appendChild(input);
+    } else if (typeof val === 'number') {
+      const valSpan = document.createElement('span');
+      valSpan.className = 'val'; valSpan.textContent = val;
+      label.appendChild(valSpan);
+      const input = document.createElement('input');
+      input.type = 'range';
+      input.min = key === 'scale' ? 0.3 : 1;
+      input.max = key === 'scale' ? 3 : (key === 'rows' ? 10 : 40);
+      input.step = key === 'scale' ? 0.1 : 1;
+      input.value = val;
+      input.addEventListener('input', () => {
+        def.params[key] = parseFloat(input.value);
+        valSpan.textContent = input.value;
+        showObject(def);
+      });
+      row.appendChild(label); row.appendChild(input);
+    }
+    list.appendChild(row);
+  });
+}
+
+document.getElementById('btn-reset').addEventListener('click', () => { if (currentDef) showObject(currentDef); });
+document.getElementById('btn-random').addEventListener('click', () => {
+  if (!currentDef) return;
+  Object.entries(currentDef.params).forEach(([k, v]) => {
+    if (typeof v === 'string' && v.startsWith('#')) {
+      currentDef.params[k] = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+    } else if (k === 'scale') {
+      currentDef.params[k] = 0.5 + Math.random() * 2;
+    }
+  });
+  showObject(currentDef);
+});
+
+// Afficher le premier objet par défaut
+showObject(library[0].items[0]);
+</script>
+</body>
+</html>
