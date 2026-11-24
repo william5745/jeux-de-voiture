@@ -53515,10 +53515,10 @@ const boostMat = new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x0
   boostPads.push({ index: i, mesh: m, cooldown: 0 });
 });
 
-// Zone de stands (changement de pneus) — allée des stands à DROITE, uniquement près de la ligne de départ
-const pitPads = [];
+// Zone de stands : boxes individuels à DROITE de la piste, près de la ligne de départ
+const pitBoxes = []; // { pos: Vector3, heading, takenBy: player|null }
 {
-  // Construit un segment de ruban uniquement dans la zone de la ligne de départ (pas tout le circuit)
+  // --- Couloir d'accès à droite de la piste (de 0.97 à 0.06) ---
   function buildRibbonSegment(fracStart, fracEnd, offset, width, y, material) {
     const verts = [], idx = [];
     const N = 40;
@@ -53545,79 +53545,84 @@ const pitPads = [];
     mesh.receiveShadow = true;
     return mesh;
   }
-  // Allée des stands : de 3% avant la ligne à 8% après (côté droit = offset négatif)
   const pitRoadMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.9 });
-  scene.add(buildRibbonSegment(0.97, 0.08, -(ROAD_HALF + 5), 8, 0.02, pitRoadMat));
-  // MUR PHYSIQUE entre la piste et l'allée des stands (grosse ligne solide côté droit)
-  {
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.7 });
-    const wallH = 1.2;
-    for (let frac = 0.975; frac < 0.075 + 1; frac += 0.005) {
-      const si = ((frac % 1) + 1) % 1;
-      let d0 = si; d0 = Math.min(d0, 1 - d0);
-      if (d0 < 0.012) continue; // ouverture entrée/sortie
-      const i = Math.floor(si * SAMPLES) % SAMPLES;
-      const p = samples[i], t = curve.getTangentAt(si);
-      const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-      const wall = new THREE.Mesh(new THREE.BoxGeometry(SAMPLES * 0.005 * 1.5, wallH, 0.4), wallMat);
-      wall.position.copy(p).addScaledVector(side, -(ROAD_HALF + 1));
-      wall.position.y = wallH / 2;
-      wall.rotation.y = Math.atan2(-t.z, t.x);
-      wall.castShadow = true;
-      scene.add(wall);
-    }
-  }
-  // Lignes délimitant l'allée (orange côté piste, blanche côté extérieur)
+  scene.add(buildRibbonSegment(0.97, 0.06, -(ROAD_HALF + 4), 6, 0.02, pitRoadMat));
+  // Ligne orange côté piste
   const pitOrangeMat = new THREE.MeshStandardMaterial({ color: 0xff9800, emissive: 0xcc6600, emissiveIntensity: 0.8 });
-  const pitWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 });
-  scene.add(buildRibbonSegment(0.97, 0.08, -(ROAD_HALF + 1), 0.4, 0.04, pitOrangeMat));
-  scene.add(buildRibbonSegment(0.97, 0.08, -(ROAD_HALF + 9), 0.4, 0.04, pitWhiteMat));
-  // "PIT LANE" peint au sol
-  {
-    const c = document.createElement('canvas'); c.width = 512; c.height = 128;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#444444'; ctx.fillRect(0, 0, 512, 128);
-    ctx.fillStyle = '#ff9800'; ctx.font = 'bold 80px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('PIT LANE', 256, 68);
-    const tex = new THREE.CanvasTexture(c);
-    const label = new THREE.Mesh(new THREE.PlaneGeometry(14, 3.5),
-      new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9 }));
-    const p0 = samples[Math.floor(SAMPLES * 0.02)], t0 = curve.getTangentAt(0.02);
-    const s0 = new THREE.Vector3(-t0.z, 0, t0.x).normalize();
-    label.rotation.x = -Math.PI / 2;
-    label.rotation.z = Math.atan2(-t0.x, -t0.z);
-    label.position.copy(p0).addScaledVector(s0, -(ROAD_HALF + 5));
-    label.position.y = 0.05;
-    scene.add(label);
+  scene.add(buildRibbonSegment(0.97, 0.06, -(ROAD_HALF + 1), 0.4, 0.04, pitOrangeMat));
+
+  // --- Boxes de stand individuels (carrés peints au sol) ---
+  const N_BOXES = 8;
+  const boxMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.8 });
+  const boxLineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+  for (let b = 0; b < N_BOXES; b++) {
+    const frac = 0.975 + (b / N_BOXES) * 0.055; // répartis de 97.5% à ~3%
+    const si = frac % 1;
+    const i = Math.floor(si * SAMPLES) % SAMPLES;
+    const p = samples[i], t = curve.getTangentAt(si);
+    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+    const boxCenter = p.clone().addScaledVector(side, -(ROAD_HALF + 7));
+    const heading = Math.atan2(t.x, t.z);
+    // le carré du box (4x5m)
+    const box = new THREE.Mesh(new THREE.PlaneGeometry(4, 5), boxMat);
+    box.rotation.x = -Math.PI / 2;
+    box.rotation.z = Math.atan2(-t.x, -t.z);
+    box.position.copy(boxCenter);
+    box.position.y = 0.05;
+    box.receiveShadow = true;
+    scene.add(box);
+    // lignes blanches du box
+    const lineGeo = new THREE.PlaneGeometry(4.2, 0.2);
+    const lineGeo2 = new THREE.PlaneGeometry(0.2, 5.2);
+    [[0, -2.5, lineGeo], [0, 2.5, lineGeo], [-2, 0, lineGeo2], [2, 0, lineGeo2]].forEach(([ox, oz, geo]) => {
+      const line = new THREE.Mesh(geo, boxLineMat);
+      line.rotation.x = -Math.PI / 2;
+      line.rotation.z = Math.atan2(-t.x, -t.z);
+      const off = new THREE.Vector3(ox, 0, oz);
+      off.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(-t.x, -t.z));
+      line.position.copy(boxCenter).add(off);
+      line.position.y = 0.06;
+      scene.add(line);
+    });
+    pitBoxes.push({ pos: boxCenter.clone(), heading, takenBy: null });
   }
-  // Panneau "PIT" au début de l'allée
+
+  // --- GRAND PANNEAU "ARRÊT AU STAND" au-dessus des boxes ---
   {
-    const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 128;
     const ctx = c.getContext('2d');
-    ctx.fillStyle = '#ff9800'; ctx.fillRect(0, 0, 256, 128);
-    ctx.fillStyle = '#000'; ctx.font = 'bold 72px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('PIT', 128, 68);
+    ctx.fillStyle = '#d8342c'; ctx.fillRect(0, 0, 1024, 128);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 6; ctx.strokeRect(3, 3, 1018, 122);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 72px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('ARRÊT AU STAND', 512, 68);
     const tex = new THREE.CanvasTexture(c);
-    const sign = new THREE.Mesh(new THREE.PlaneGeometry(6, 3),
-      new THREE.MeshStandardMaterial({ map: tex, side: THREE.DoubleSide, emissive: 0x664400, emissiveIntensity: 0.3 }));
-    const p0 = samples[Math.floor(SAMPLES * 0.97)], t0 = curve.getTangentAt(0.97);
-    const s0 = new THREE.Vector3(-t0.z, 0, t0.x).normalize();
-    sign.position.copy(p0).addScaledVector(s0, -(ROAD_HALF + 10));
-    sign.position.y = 4;
-    sign.rotation.y = Math.atan2(-t0.z, t0.x) + Math.PI;
-    scene.add(sign);
-    const postG = new THREE.CylinderGeometry(0.12, 0.12, 4, 6);
-    const postMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
-    [-2.5, 2.5].forEach(x => {
+    const banner = new THREE.Mesh(
+      new THREE.BoxGeometry(30, 3.75, 0.5),
+      new THREE.MeshStandardMaterial({ map: tex, emissive: 0x441111, emissiveIntensity: 0.3 })
+    );
+    // portique au-dessus du milieu des boxes
+    const fracMid = 0.975 + 0.0275;
+    const siMid = fracMid % 1;
+    const pMid = samples[Math.floor(siMid * SAMPLES) % SAMPLES];
+    const tMid = curve.getTangentAt(siMid);
+    const sMid = new THREE.Vector3(-tMid.z, 0, tMid.x).normalize();
+    banner.position.copy(pMid).addScaledVector(sMid, -(ROAD_HALF + 7));
+    banner.position.y = 6;
+    banner.rotation.y = Math.atan2(-tMid.z, tMid.x) + Math.PI;
+    banner.castShadow = true;
+    scene.add(banner);
+    // poteaux du portique
+    const postG = new THREE.CylinderGeometry(0.3, 0.3, 6, 8);
+    const postMat = new THREE.MeshStandardMaterial({ color: 0xd8342c, roughness: 0.5 });
+    const postOffset = 14;
+    [-1, 1].forEach(s => {
       const post = new THREE.Mesh(postG, postMat);
-      post.position.copy(p0).addScaledVector(s0, -(ROAD_HALF + 10));
-      post.position.x += Math.cos(sign.rotation.y) * x;
-      post.position.z -= Math.sin(sign.rotation.y) * x;
-      post.position.y = 2;
+      const perp = new THREE.Vector3(Math.cos(banner.rotation.y), 0, -Math.sin(banner.rotation.y));
+      post.position.copy(banner.position).addScaledVector(perp, s * postOffset);
+      post.position.y = 3;
       scene.add(post);
     });
   }
-  pitPads.push({ index: 0 });
 }
 
 // Caisses bonus "?" flottantes (style Mario Kart)
@@ -54150,17 +54155,21 @@ function botInput(p, dt) {
   // point de visée : plus la vitesse est haute, plus on regarde loin
   const look = Math.floor(10 + Math.abs(p.speed) * 0.55);
   let target = samples[(near.index + look) % SAMPLES];
-  // Les bots visent l'allée des stands (côté droit) quand leurs pneus sont usés
+  // Les bots visent un box de stand disponible quand leurs pneus sont usés (bout du 4ème tour)
   const needsPit = p.tires < 25 && !p.exploded;
   let distToPit = Math.abs(near.index); distToPit = Math.min(distToPit, SAMPLES - distToPit);
   if (needsPit && distToPit < SAMPLES * 0.12) {
-    const t = curve.getTangentAt(near.index / SAMPLES);
-    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-    target = samples[near.index].clone().addScaledVector(side, -(ROAD_HALF + 5)); // centre de l'allée des stands
+    let targetBox = p.pitBox || pitBoxes.find(b => !b.takenBy || b.takenBy === p);
+    if (targetBox) {
+      target = targetBox.pos.clone();
+      p.pitBoxTarget = targetBox;
+    } else {
+      target = samples[near.index].clone();
+    }
   }
   // Si le bot est dans l'allée mais a des pneus neufs, il vise la piste pour ressortir
   if (p.inPitLane && !needsPit) {
-    target = samples[(near.index + 5) % SAMPLES]; // retour sur la piste
+    target = samples[(near.index + 5) % SAMPLES];
   }
   const desired = Math.atan2(target.x - p.pos.x, target.z - p.pos.z);
   const diff = wrapAngle(desired - p.heading);
@@ -54172,9 +54181,12 @@ function botInput(p, dt) {
   const brakeSharp = botLevel === 2 ? 1.25 : 1.1;
   const brakeSpeed = botLevel === 2 ? 24 : 18;
   const driftSharp = botLevel === 2 ? 0.6 : 0.75;
-  // Si besoin de pneus et dans l'allée des stands, on s'arrête (frein à main)
-  if (needsPit && distToPit < SAMPLES * 0.06 && p.inPitLane && Math.abs(p.speed) < 6) {
-    return { up: false, down: true, left: diff > 0.12, right: diff < -0.12, drift: false, useItem: false };
+  // Si besoin de pneus et proche d'un box, on s'arrête
+  if (needsPit && p.pitBoxTarget) {
+    const dBox = Math.hypot(p.pos.x - p.pitBoxTarget.pos.x, p.pos.z - p.pitBoxTarget.pos.z);
+    if (dBox < 3 && Math.abs(p.speed) < 6) {
+      return { up: false, down: true, left: diff > 0.12, right: diff < -0.12, drift: false, useItem: false };
+    }
   }
   return {
     up: !(p.speed >= botMax || (sharp > 0.65 && p.speed > 20)) && !(needsPit && distToPit < SAMPLES * 0.14) && !(p.inPitLane && !needsPit && p.speed >= 15), // repart du pit après changement
@@ -54336,8 +54348,8 @@ function updatePlayer(p, dt) {
   // Zone de pit : autour de la ligne de départ (index ~0)
   let dStart = Math.abs(near.index); dStart = Math.min(dStart, SAMPLES - dStart);
   const inPitZone = dStart < SAMPLES * 0.11;
-  const PIT_LANE_INNER = -(ROAD_HALF + 0.5);  // chevauche le bord de piste pour laisser entrer
-  const PIT_LANE_OUTER = -(ROAD_HALF + 9);    // mur extérieur de l'allée
+  const PIT_LANE_INNER = -(ROAD_HALF + 0.5);
+  const PIT_LANE_OUTER = -(ROAD_HALF + 11);
 
   if (inPitZone && lateral < PIT_LANE_INNER && lateral > PIT_LANE_OUTER) {
     // Dans l'allée des stands : autorisé, pas de mur
@@ -54391,35 +54403,43 @@ function updatePlayer(p, dt) {
     if (Math.random() < 0.3) spawnParticle(p.pos.x, 1, p.pos.z, 0x111111, 1, 2);
   }
 
-  // Zone de stands : si le kart est dans l'allée des stands (à droite) et ralentit, on change les pneus
+  // Zone de stands : si le kart est près d'un box et ralentit, on change les pneus
   p.inPit = false;
-  if (p.inPitLane && Math.abs(p.speed) < 4) {
-    p.inPit = true;
-    p.pitTimer += dt;
-    // Mécaniciens dans la voiture (positionnés sur le kart)
-    if (p.mechanics) {
-      p.mechanics.forEach((m, i) => {
-        m.visible = true;
-        // Les mécaniciens sont "dans" la voiture : positionnés sur le kart
-        m.position.set(
-          p.pos.x + Math.sin(p.heading + (i - 1) * 2) * 0.3,
-          p.pos.y,
-          p.pos.z + Math.cos(p.heading + (i - 1) * 2) * 0.3
-        );
-        m.rotation.y = p.heading;
-        // animation : les bras bougent (travail sur les roues)
-        const t = performance.now() * 0.008;
-        m.userData.armL.rotation.x = Math.sin(t + i) * 0.8;
-        m.userData.armR.rotation.x = Math.sin(t + i + Math.PI) * 0.8;
-      });
+  p.pitBox = null;
+  for (const box of pitBoxes) {
+    const d = Math.hypot(p.pos.x - box.pos.x, p.pos.z - box.pos.z);
+    if (d < 3.5 && Math.abs(p.speed) < 4) {
+      p.inPit = true;
+      p.pitBox = box;
+      if (!box.takenBy) box.takenBy = p;
+      p.pitTimer += dt;
+      if (p.mechanics) {
+        p.mechanics.forEach((m, i) => {
+          m.visible = true;
+          m.position.set(
+            p.pos.x + Math.sin(p.heading + (i - 1) * 2) * 0.3,
+            p.pos.y,
+            p.pos.z + Math.cos(p.heading + (i - 1) * 2) * 0.3
+          );
+          m.rotation.y = p.heading;
+          const t = performance.now() * 0.008;
+          m.userData.armL.rotation.x = Math.sin(t + i) * 0.8;
+          m.userData.armR.rotation.x = Math.sin(t + i + Math.PI) * 0.8;
+        });
+      }
+      if (p.pitTimer >= 7) {
+        p.tires = 100;
+        p.pitTimer = 0;
+        if (box.takenBy === p) box.takenBy = null;
+        spawnParticle(p.pos.x, 1, p.pos.z, 0xff9800, 0.6, 1.2);
+      }
+      break;
     }
-    if (p.pitTimer >= 7) { // 7 secondes à l'arrêt dans l'allée = pneus changés
-      p.tires = 100;
-      p.pitTimer = 0;
-      spawnParticle(p.pos.x, 1, p.pos.z, 0xff9800, 0.6, 1.2);
-    }
-  } else {
+  }
+  if (!p.inPit) {
     p.pitTimer = 0;
+    if (p.pitBox && p.pitBox.takenBy === p) p.pitBox.takenBy = null;
+    p.pitBox = null;
     if (p.mechanics) p.mechanics.forEach(m => { m.visible = false; });
   }
 
