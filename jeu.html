@@ -52,17 +52,20 @@
 <div id="hud2" class="hud">🔵 J2 — Tour 1/3</div>
 <div id="music-hud" class="hud">🎵</div>
 <div id="msg" class="hud"></div>
-<div id="help" class="hud">J1 : Z Q S D + Espace (drift) + A (objet) &nbsp;|&nbsp; J2 : Flèches + Maj droite (drift) + Entrée (objet) &nbsp;|&nbsp; 4 bots &nbsp;|&nbsp; M = musique on/off &nbsp;|&nbsp; 3 tours !</div>
+<div id="help" class="hud">J1 : Z Q S D + Espace (drift) + A (objet) &nbsp;|&nbsp; J2 : Flèches + Maj droite (drift) + Entrée (objet) &nbsp;|&nbsp; <span id="nb-bots"></span> bots &nbsp;|&nbsp; M = musique on/off &nbsp;|&nbsp; 3 tours !</div>
 <canvas id="map1" class="minimap" width="180" height="180"></canvas>
 <canvas id="map2" class="minimap" width="180" height="180"></canvas>
 <div id="menu">
   <h1>🏁 Turbo Circuit</h1>
+  <p id="menu-circuit">Circuit actuel : <strong id="menu-circuit-name"></strong></p>
+  <p>Choisis un autre circuit :</p>
+  <div class="menu-btns" id="circuit-btns"></div>
   <p>Choisis le niveau des bots : (⏱️ qualification automatique avant la course)</p>
   <div class="menu-btns">
     <button data-level="1">🤖 Niveau 1 — Facile</button>
     <button data-level="2">🤖 Niveau 2 — Difficile</button>
   </div>
-  <p>(ou appuie sur 1 ou 2)</p>
+  <p>(touches 1-4 = circuit • F = facile • D = difficile)</p>
 </div>
 
 <script type="module">/**
@@ -53183,12 +53186,47 @@ sun.shadow.camera.far = 500;
 scene.add(sun);
 
 /* ============================= CIRCUIT ============================= */
-// Tracé du circuit (boucle fermée)
-const trackPoints = [
-  [0, -90], [70, -95], [130, -70], [150, -20], [130, 30], [150, 80],
-  [110, 120], [40, 105], [10, 130], [-50, 125], [-100, 95], [-130, 60],
-  [-110, 10], [-140, -40], [-90, -70]
-].map(([x, z]) => new THREE.Vector3(x, 0, z));
+// Plusieurs circuits au choix (boucles fermées)
+const CIRCUITS = [
+  {
+    name: '🏁 Le Mans',
+    points: [
+      [0, -90], [70, -95], [130, -70], [150, -20], [130, 30], [150, 80],
+      [110, 120], [40, 105], [10, 130], [-50, 125], [-100, 95], [-130, 60],
+      [-110, 10], [-140, -40], [-90, -70]
+    ]
+  },
+  {
+    name: '🐍 Le Serpent',
+    points: [
+      [0, -100], [60, -80], [30, -40], [80, -10], [40, 30], [90, 60],
+      [50, 95], [0, 80], [-40, 110], [-90, 80], [-60, 40], [-110, 10],
+      [-70, -30], [-120, -60], [-60, -90]
+    ]
+  },
+  {
+    name: '🥚 L\'Ovale Turbo',
+    points: [
+      [0, -110], [80, -105], [140, -70], [160, -10], [150, 50],
+      [110, 100], [40, 115], [-40, 110], [-110, 85], [-150, 40],
+      [-160, -20], [-140, -75], [-80, -108]
+    ]
+  },
+  {
+    name: '🏜️ Le Canyon',
+    points: [
+      [0, -80], [50, -95], [110, -80], [130, -40], [100, -10],
+      [140, 20], [110, 55], [60, 45], [30, 80], [-20, 70],
+      [-50, 100], [-100, 90], [-120, 50], [-90, 20], [-130, -10],
+      [-100, -50], [-50, -60]
+    ]
+  }
+];
+// Circuit choisi (stocké en localStorage, 0 par défaut)
+const circuitIndex = Math.max(0, Math.min(CIRCUITS.length - 1, parseInt(localStorage.getItem('turboCircuit') || '0')));
+const trackPoints = CIRCUITS[circuitIndex].points.map(([x, z]) => new THREE.Vector3(x, 0, z));
+// Met à jour le titre de la page avec le nom du circuit
+document.title = 'Turbo Circuit — ' + CIRCUITS[circuitIndex].name;
 
 const curve = new THREE.CatmullRomCurve3(trackPoints, true, 'catmullrom', 0.6);
 const SAMPLES = 600;
@@ -53305,8 +53343,11 @@ function buildWall(offset) {
   mesh.castShadow = true;
   return mesh;
 }
-scene.add(buildWall(-ROAD_HALF - 2.8));
-scene.add(buildWall(ROAD_HALF + 2.8));
+// Murs sur les bords (uniquement sur Le Mans — sur les autres circuits ils débordent dans les virages serrés)
+if (circuitIndex === 0) {
+  scene.add(buildWall(-ROAD_HALF - 2.8));
+  scene.add(buildWall(ROAD_HALF + 2.8));
+}
 
 // Barrières à bandes rouges/blanches à certains endroits du circuit
 function stripedTexture() {
@@ -53392,24 +53433,60 @@ function buildStand(frac, sideSign, rows, seats) {
   scene.add(stand);
 }
 // Grands gradins au départ (des deux côtés, décalés pour éviter les poteaux du portique)
-buildStand(0.015, 1, 6, 9);
-buildStand(0.985, -1, 6, 9);
-buildStand(0.08, 1, 4, 6);
-buildStand(0.30, -1, 4, 6);
-buildStand(0.50, 1, 4, 6);
-buildStand(0.68, -1, 4, 6);
-buildStand(0.85, 1, 4, 6);
+// Tribunes sur tous les circuits (plus seulement Le Mans et l'ovale)
+for (let k = 0; k < 10; k++) {
+  const frac = k / 10;
+  const i = Math.floor(frac * SAMPLES);
+  const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
+  const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+  const sideSign = k % 2 === 0 ? 1 : -1;
+  const tx = p.x + side.x * sideSign * (ROAD_HALF + 8);
+  const tz = p.z + side.z * sideSign * (ROAD_HALF + 8);
+  if (isFarFromTrack(tx, tz, ROAD_HALF + 4)) {
+    buildStand(frac, sideSign, 4 + (k % 3), 6 + (k % 4));
+  }
+}
 
-// Barrières sur les extérieurs des virages serrés (fractions du tour, côté extérieur = +)
-const barrierSpots = [
-  [0.03, 0.16],  // virage est
-  [0.28, 0.42],  // virage nord-est
-  [0.55, 0.68],  // virage ouest
-  [0.80, 0.93]   // virage sud-ouest
-];
-for (const [a, b] of barrierSpots) {
-  scene.add(buildBarrier(Math.floor(a * SAMPLES), Math.floor(b * SAMPLES), ROAD_HALF + 1.8));
-  scene.add(buildBarrier(Math.floor(a * SAMPLES), Math.floor(b * SAMPLES), -ROAD_HALF - 1.8));
+// Tribunes supplémentaires spécifiques
+if (circuitIndex === 0) {
+  buildStand(0.015, 1, 6, 9);
+  buildStand(0.985, -1, 6, 9);
+  buildStand(0.08, 1, 4, 6);
+  buildStand(0.30, -1, 4, 6);
+  buildStand(0.50, 1, 4, 6);
+  buildStand(0.68, -1, 4, 6);
+  buildStand(0.85, 1, 4, 6);
+}
+
+// Tribunes tout autour de l'ovale (index 2) — avec vérification anti-bug
+if (circuitIndex === 2) {
+  for (let k = 0; k < 24; k++) {
+    const frac = k / 24;
+    const i = Math.floor(frac * SAMPLES);
+    const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
+    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+    const sideSign = k % 2 === 0 ? 1 : -1;
+    const tx = p.x + side.x * sideSign * (ROAD_HALF + 8);
+    const tz = p.z + side.z * sideSign * (ROAD_HALF + 8);
+    // Ne placer la tribune que si elle est bien dégagée de toute la piste
+    if (isFarFromTrack(tx, tz, ROAD_HALF + 4)) {
+      buildStand(frac, sideSign, 5, 10);
+    }
+  }
+}
+
+// Barrières sur les extérieurs des virages serrés (fractions spécifiques au Mans)
+if (circuitIndex === 0) {
+  const barrierSpots = [
+    [0.03, 0.16],  // virage est
+    [0.28, 0.42],  // virage nord-est
+    [0.55, 0.68],  // virage ouest
+    [0.80, 0.93]   // virage sud-ouest
+  ];
+  for (const [a, b] of barrierSpots) {
+    scene.add(buildBarrier(Math.floor(a * SAMPLES), Math.floor(b * SAMPLES), ROAD_HALF + 1.8));
+    scene.add(buildBarrier(Math.floor(a * SAMPLES), Math.floor(b * SAMPLES), -ROAD_HALF - 1.8));
+  }
 }
 
 // Sol (herbe)
@@ -53438,6 +53515,21 @@ const boostMat = new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x0
   boostPads.push({ index: i, mesh: m, cooldown: 0 });
 });
 
+// Zone de stands (changement de pneus) — présente sur TOUS les circuits, près de la ligne de départ
+const pitPads = [];
+{
+  const pitMat = new THREE.MeshStandardMaterial({ color: 0xff9800, emissive: 0xcc6600, transparent: true, opacity: 0.7 });
+  const i = Math.floor(0.02 * SAMPLES);
+  const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
+  const g = new THREE.PlaneGeometry(ROAD_HALF * 2, 6);
+  const m = new THREE.Mesh(g, pitMat);
+  m.rotation.x = -Math.PI / 2;
+  m.rotation.z = Math.atan2(-t.x, -t.z);
+  m.position.set(p.x, 0.06, p.z);
+  scene.add(m);
+  pitPads.push({ index: i, mesh: m });
+}
+
 // Caisses bonus "?" flottantes (style Mario Kart)
 const ITEMS = [
   { icon: '🍄', name: 'Champignon', use: p => { p.boost = Math.max(p.boost, 2.2); } },
@@ -53461,7 +53553,8 @@ const boxTex = questionTexture();
   const i = Math.floor(frac * SAMPLES);
   const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
   const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-  [-6, 0, 6].forEach(off => {
+  // Caisses sur la piste (style Mario Kart — elles n'ont pas de collision physique, on les traverse pour les ramasser)
+  [-ROAD_HALF * 0.5, 0, ROAD_HALF * 0.5].forEach(off => {
     const m = new THREE.Mesh(
       new THREE.BoxGeometry(1.8, 1.8, 1.8),
       new THREE.MeshStandardMaterial({ map: boxTex, emissive: 0x664400 })
@@ -53624,8 +53717,8 @@ function buildACOBuilding(frac, sideSign) {
   b.rotation.y = Math.atan2(-t.z, t.x);
   scene.add(b);
 }
-// Tour ACO juste après la ligne de départ
-buildACOBuilding(0.05, 1);
+// Tour ACO juste après la ligne de départ (uniquement sur Le Mans)
+if (circuitIndex === 0) buildACOBuilding(0.05, 1);
 
 // Long bâtiment du paddock qui longe TOUTE la ligne de départ (style bâtiment des stands du Mans)
 function pitFrontTexture() {
@@ -53702,11 +53795,13 @@ function buildPitBuilding(fracStart, fracEnd, offset) {
   scene.add(g);
 }
 // le bâtiment s'étend sur toute la longueur de la ligne de départ (de 0.962 à 0.078, en passant par la ligne)
-buildPitBuilding(0.962, 0.078, ROAD_HALF + 25);
+if (circuitIndex === 0) buildPitBuilding(0.962, 0.078, ROAD_HALF + 25);
 
 // Tribunes principales en face de la tour ACO (côté opposé de la piste)
-buildStand(0.055, -1, 8, 14);
-buildStand(0.105, -1, 6, 10);
+if (circuitIndex === 0) {
+  buildStand(0.055, -1, 8, 14);
+  buildStand(0.105, -1, 6, 10);
+}
 
 // Décor : arbres et panneaux
 function addTree(x, z) {
@@ -53722,16 +53817,30 @@ function addTree(x, z) {
   leaves.position.set(x, 5, z); leaves.castShadow = true;
   scene.add(trunk, leaves);
 }
+// Vérifie qu'une position (x,z) est à au moins minDist de TOUS les points de la piste
+// (évite qu'un arbre placé "à côté" d'un virage serré se retrouve sur la route de l'autre côté)
+function isFarFromTrack(x, z, minDist) {
+  const minD2 = minDist * minDist;
+  for (let i = 0; i < SAMPLES; i += 3) { // étape de 3 pour alléger le calcul
+    const dx = samples[i].x - x, dz = samples[i].z - z;
+    if (dx * dx + dz * dz < minD2) return false;
+  }
+  return true;
+}
 for (let i = 0; i < SAMPLES; i += 20) {
   const p = samples[i];
   const t = curve.getTangentAt(i / SAMPLES);
   const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-  const r1 = 18 + (i % 3) * 4, r2 = 18 + ((i + 7) % 3) * 4;
-  addTree(p.x + side.x * r1, p.z + side.z * r1);
-  addTree(p.x - side.x * r2, p.z - side.z * r2);
+  const r1 = 22 + (i % 3) * 5, r2 = 22 + ((i + 7) % 3) * 5;
+  const x1 = p.x + side.x * r1, z1 = p.z + side.z * r1;
+  const x2 = p.x - side.x * r2, z2 = p.z - side.z * r2;
+  if (isFarFromTrack(x1, z1, ROAD_HALF + 6)) addTree(x1, z1);
+  if (isFarFromTrack(x2, z2, ROAD_HALF + 6)) addTree(x2, z2);
 }
-// Quelques arbres au centre
-[[0, 20], [40, 60], [-60, 40], [30, -30], [-30, -20]].forEach(([x, z]) => addTree(x, z));
+// Quelques arbres au centre (uniquement sur Le Mans, coordonnées fixes)
+if (circuitIndex === 0) {
+  [[0, 20], [40, 60], [-60, 40], [30, -30], [-30, -20]].forEach(([x, z]) => addTree(x, z));
+}
 
 // Buissons et fleurs colorées
 {
@@ -53742,16 +53851,22 @@ for (let i = 0; i < SAMPLES; i += 20) {
     const p = samples[i];
     const t = curve.getTangentAt(i / SAMPLES);
     const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-    const r = ROAD_HALF + 4 + (i % 5);
+    const r = ROAD_HALF + 8 + (i % 5);
     const s = i % 2 ? 1 : -1;
-    const b = new THREE.Mesh(new THREE.SphereGeometry(1 + (i % 3) * 0.4, 6, 5), bushMat);
-    b.position.set(p.x + side.x * r * s, 0.6, p.z + side.z * r * s);
-    b.scale.y = 0.7;
-    scene.add(b);
-    if (i % 14 === 0) {
-      const f = new THREE.Mesh(new THREE.SphereGeometry(0.35, 6, 5), flowerMats[i % 4]);
-      f.position.set(p.x - side.x * (r + 1.5) * s, 0.35, p.z - side.z * (r + 1.5) * s);
-      scene.add(f);
+    const bx = p.x + side.x * r * s, bz = p.z + side.z * r * s;
+    if (isFarFromTrack(bx, bz, ROAD_HALF + 5)) {
+      const b = new THREE.Mesh(new THREE.SphereGeometry(1 + (i % 3) * 0.4, 6, 5), bushMat);
+      b.position.set(bx, 0.6, bz);
+      b.scale.y = 0.7;
+      scene.add(b);
+      if (i % 14 === 0) {
+        const fx = p.x - side.x * (r + 1.5) * s, fz = p.z - side.z * (r + 1.5) * s;
+        if (isFarFromTrack(fx, fz, ROAD_HALF + 2)) {
+          const f = new THREE.Mesh(new THREE.SphereGeometry(0.35, 6, 5), flowerMats[i % 4]);
+          f.position.set(fx, 0.35, fz);
+          scene.add(f);
+        }
+      }
     }
   }
 }
@@ -53831,14 +53946,18 @@ function makeKart(color) {
   return { group, wheels, flame };
 }
 
-const kart1 = makeKart(0xe53935); // rouge
-const kart2 = makeKart(0x1e88e5); // bleu
-const kart3 = makeKart(0x43a047); // vert
-const kart4 = makeKart(0xfb8c00); // orange
-const kart5 = makeKart(0x8e24aa); // violet
-const kart6 = makeKart(0xfdd835); // jaune
+// Nombre de bots selon le circuit : 15 sur l'ovale, 4 ailleurs
+const NB_BOTS = circuitIndex === 2 ? 15 : 4;
+const TOTAL_KARTS = 2 + NB_BOTS;
 
-const TOTAL_LAPS = 3;
+// Karts avec couleurs générées en HSL pour avoir assez de variété
+const karts = [];
+for (let i = 0; i < TOTAL_KARTS; i++) {
+  const hue = (i * 360 / TOTAL_KARTS) % 360;
+  karts.push(makeKart(new THREE.Color().setHSL(hue / 360, 0.75, 0.5)));
+}
+
+const TOTAL_LAPS = 8;
 const CHECKPOINTS = [Math.floor(SAMPLES * 0.33), Math.floor(SAMPLES * 0.66)];
 
 function makePlayer(kart, startIndex, keys, color, bot) {
@@ -53855,29 +53974,37 @@ function makePlayer(kart, startIndex, keys, color, bot) {
     item: null, hit: 0, star: 0, useItem: false,
     lapStart: 0, bestLap: null, lastLap: null,
     qualifTime: null, prevIdx: startIndex, qualifHalf: false,
+    tires: 100, pitTimer: 0, inPit: false,
     bot: !!bot,
     color
   };
 }
 
+function kartColor(i) {
+  const hue = (i * 360 / TOTAL_KARTS) % 360;
+  return `hsl(${hue.toFixed(0)}, 75%, 50%)`;
+}
+
 // On utilise e.key (lettre affichée) et non e.code (position physique) pour
 // que ça marche sur les claviers AZERTY comme QWERTY.
 // Les karts démarrent derrière la ligne blanche (indices négatifs = avant le tour 0)
-const p1 = makePlayer(kart1, SAMPLES - 12, { up: 'z', down: 's', left: 'q', right: 'd', drift: ' ', item: 'a' }, '#e53935');
-const p2 = makePlayer(kart2, SAMPLES - 10, { up: 'arrowup', down: 'arrowdown', left: 'arrowleft', right: 'arrowright', drift: 'shiftright', item: 'enter' }, '#1e88e5');
+const p1 = makePlayer(karts[0], SAMPLES - 12, { up: 'z', down: 's', left: 'q', right: 'd', drift: ' ', item: 'a' }, kartColor(0));
+const p2 = makePlayer(karts[1], SAMPLES - 10, { up: 'arrowup', down: 'arrowdown', left: 'arrowleft', right: 'arrowright', drift: 'shiftright', item: 'enter' }, kartColor(1));
 // Bots supplémentaires sur la grille
-const bots = [
-  makePlayer(kart3, SAMPLES - 8, null, '#43a047', true),
-  makePlayer(kart4, SAMPLES - 6, null, '#fb8c00', true),
-  makePlayer(kart5, SAMPLES - 4, null, '#8e24aa', true),
-  makePlayer(kart6, SAMPLES - 2, null, '#fdd835', true)
-];
-// décalage latéral de chaque kart sur la grille
+const bots = [];
+for (let b = 0; b < NB_BOTS; b++) {
+  bots.push(makePlayer(karts[2 + b], SAMPLES - 8 - b * 2, null, kartColor(2 + b), true));
+}
+// décalage latéral de chaque kart sur la grille (2 colonnes max pour éviter de dépasser la route)
 {
   const t = curve.getTangentAt((SAMPLES - 12) / SAMPLES);
   const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
   const all = [p1, p2, ...bots];
-  all.forEach((p, i) => p.pos.addScaledVector(side, (all.length - 1) * 2 - i * 4));
+  all.forEach((p, i) => {
+    const row = Math.floor(i / 2);
+    const col = i % 2 === 0 ? -2 : 2;
+    p.pos.addScaledVector(side, col - row * 0); // décalage latéral alterné
+  });
 }
 
 const players = [p1, p2, ...bots];
@@ -53904,8 +54031,17 @@ function botInput(p, dt) {
   const brakeSharp = botLevel === 2 ? 1.25 : 1.1;
   const brakeSpeed = botLevel === 2 ? 24 : 18;
   const driftSharp = botLevel === 2 ? 0.6 : 0.75;
+  // Les bots vont aux stands quand leurs pneus sont usés (< 25%)
+  const needsPit = p.tires < 25;
+  const pitIndex = pitPads.length > 0 ? pitPads[0].index : 0;
+  let distToPit = Math.abs(((near.index - pitIndex + SAMPLES) % SAMPLES + SAMPLES) % SAMPLES);
+  distToPit = Math.min(distToPit, SAMPLES - distToPit);
+  // Si besoin de pneus et proche de la zone de pit, on ralentit pour s'y arrêter
+  if (needsPit && distToPit < 15 && Math.abs(p.speed) < 6) {
+    return { up: false, down: true, left: diff > 0.12, right: diff < -0.12, drift: false, useItem: false };
+  }
   return {
-    up: !(p.speed >= botMax || (sharp > 0.65 && p.speed > 20)), // accélère jusqu'à sa vitesse max, sauf gros virage
+    up: !(p.speed >= botMax || (sharp > 0.65 && p.speed > 20)) && !(needsPit && distToPit < 40), // ralentit à l'approche du pit si pneus usés
     down: sharp > brakeSharp && p.speed > brakeSpeed, // freine dans les épingles
     left: diff > 0.12,
     right: diff < -0.12,
@@ -53954,8 +54090,9 @@ window.addEventListener('keyup', e => {
 const MAX_SPEED = 34, REVERSE_MAX = 10, ACCEL = 17, BRAKE = 34, TURN = 2.6;
 const DRIFT_TURN = 3.6, DRIFT_MIN_SPEED = 14;
 let botLevel = 1; // niveau des bots choisi dans le menu (1 ou 2)
-let raceState = 'menu'; // menu | qualif | qualifResults | countdown | racing | finished
+let raceState = 'menu'; // menu | preQualif | qualif | qualifResults | countdown | racing | finished
 let countdown = 3.999;
+let preQualifTimer = 0; // compte à rebours avant le début de la qualif
 let raceClock = 0;
 let animTime = 0;
 // Qualification automatique avant la course : tour chrono de J1 puis J2
@@ -53963,6 +54100,23 @@ let qualifClock = 0;
 let qualifIdx = 0;
 const qualifPlayer = () => players[qualifIdx]; // J1 d'abord, puis J2
 const isQualifActive = p => raceState === 'qualif' && !p.bot && p === qualifPlayer();
+
+// Annonce vocale (Web Speech API)
+function speak(text) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'fr-FR';
+    u.rate = 1.1;
+    u.pitch = 1.1;
+    // Préfère une voix française si disponible
+    const voices = speechSynthesis.getVoices();
+    const fr = voices.find(v => v.lang.startsWith('fr'));
+    if (fr) u.voice = fr;
+    speechSynthesis.speak(u);
+  } catch (e) { /* ignore */ }
+}
 
 function updatePlayer(p, dt) {
   const k = p.keys;
@@ -54001,7 +54155,10 @@ function updatePlayer(p, dt) {
   }
 
   const starBonus = p.star > 0 ? 7 : 0; // l'étoile augmente aussi la vitesse max
-  p.speed = THREE.MathUtils.clamp(p.speed, -REVERSE_MAX, MAX_SPEED + starBonus);
+  // Usure des pneus : pénalité de vitesse max si pneus usés (< 30%)
+  const tirePenalty = p.tires < 30 ? (30 - p.tires) * 0.25 : 0;
+  const tireMax = MAX_SPEED + starBonus - tirePenalty;
+  p.speed = THREE.MathUtils.clamp(p.speed, -REVERSE_MAX, tireMax);
   if (p.boost > 0) { p.speed = Math.min(p.speed + 30 * dt, MAX_SPEED + 14 + starBonus); p.boost -= dt; }
 
   const steer = (left ? 1 : 0) - (right ? 1 : 0);
@@ -54052,6 +54209,29 @@ function updatePlayer(p, dt) {
     }
     pad.cooldown = Math.max(0, pad.cooldown - dt);
     pad.mesh.material.emissive.setHex(pad.cooldown > 0 ? 0x003344 : 0x0088aa);
+  }
+
+  // Usure des pneus : diminue avec la distance parcourue
+  if (raceState === 'racing' && !p.finished) {
+    p.tires = Math.max(0, p.tires - Math.abs(p.speed) * dt * 0.12);
+  }
+
+  // Zone de stands : si le kart est dans la zone et ralentit, on change les pneus
+  p.inPit = false;
+  for (const pad of pitPads) {
+    let d = Math.abs(((near.index - pad.index + SAMPLES) % SAMPLES + SAMPLES) % SAMPLES);
+    d = Math.min(d, SAMPLES - d);
+    if (d < 5 && Math.abs(p.speed) < 4) {
+      p.inPit = true;
+      p.pitTimer += dt;
+      if (p.pitTimer >= 2) { // 2 secondes à l'arrêt = pneus changés
+        p.tires = 100;
+        p.pitTimer = 0;
+        spawnParticle(p.pos.x, 1, p.pos.z, 0xff9800, 0.6, 1.2);
+      }
+    } else {
+      p.pitTimer = 0;
+    }
   }
 
   // Qualification : un tour chrono = franchir la ligne de départ APRÈS avoir
@@ -54193,11 +54373,30 @@ const Music = {
 
 /* ============================= MENU ============================= */
 const menuEl = document.getElementById('menu');
+
+// Remplit les boutons de sélection du circuit
+const circuitBtnsEl = document.getElementById('circuit-btns');
+document.getElementById('menu-circuit-name').textContent = CIRCUITS[circuitIndex].name;
+CIRCUITS.forEach((c, i) => {
+  const btn = document.createElement('button');
+  btn.textContent = c.name;
+  btn.dataset.circuit = i;
+  if (i === circuitIndex) btn.style.background = 'rgba(46, 204, 113, .9)';
+  btn.addEventListener('click', () => {
+    localStorage.setItem('turboCircuit', i);
+    location.reload();
+  });
+  circuitBtnsEl.appendChild(btn);
+});
+
 function startRace(level) {
   botLevel = level;
   menuEl.classList.add('hidden');
   Music.start();
-  startQualif(); // qualification automatique avant chaque course
+  // Compte à rebours de 3s avant la qualif, avec annonce vocale
+  raceState = 'preQualif';
+  preQualifTimer = 3.0;
+  speak('Prépare-toi ! Les qualifications commencent dans 3 secondes !');
 }
 function startQualif() {
   raceState = 'qualif';
@@ -54205,16 +54404,19 @@ function startQualif() {
   qualifIdx = 0;
   p1.qualifTime = null; p2.qualifTime = null;
   p1.qualifHalf = false; p2.qualifHalf = false;
+  speak('C\'est parti pour les qualifications !');
 }
 // Course lancée après la qualif : grille ordonnée par les temps (pole = plus rapide)
 function startRaceFromQualif() {
   const humans = [p1, p2].sort((a, b) => a.qualifTime - b.qualifTime);
   const grid = [...humans, ...bots];
   grid.forEach((p, i) => {
-    const idx = SAMPLES - 2 - i * 2; // pole (i=0) le plus proche de la ligne = devant
+    const row = Math.floor(i / 2);
+    const col = i % 2 === 0 ? -3 : 3; // 2 colonnes de part et d'autre du centre
+    const idx = SAMPLES - 2 - row * 3; // chaque rangée recule de 3 samples
     const t = curve.getTangentAt(idx / SAMPLES);
     const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-    p.pos.copy(samples[idx]).addScaledVector(side, (grid.length - 1) * 2 - i * 4);
+    p.pos.copy(samples[idx]).addScaledVector(side, col);
     p.heading = Math.atan2(t.x, t.z);
     p.speed = 0; p.lap = 1; p.nextCp = 0; p.prevIdx = idx;
     p.lapStart = 0; p.bestLap = null; p.lastLap = null;
@@ -54224,11 +54426,22 @@ function startRaceFromQualif() {
   raceState = 'countdown';
   countdown = 3.999;
 }
-menuEl.querySelectorAll('button').forEach(btn => {
+menuEl.querySelectorAll('button[data-level]').forEach(btn => {
   btn.addEventListener('click', () => startRace(Number(btn.dataset.level)));
 });
 window.addEventListener('keydown', e => {
-  if (raceState === 'menu' && (e.key === '1' || e.key === '2')) startRace(Number(e.key));
+  if (raceState === 'menu') {
+    const k = e.key.toLowerCase();
+    if (k >= '1' && k <= '4') {
+      const idx = Number(k) - 1;
+      if (idx < CIRCUITS.length && idx !== circuitIndex) {
+        localStorage.setItem('turboCircuit', idx);
+        location.reload();
+      }
+    }
+    if (k === 'f') startRace(1);
+    if (k === 'd') startRace(2);
+  }
   if (raceState === 'qualifResults') startRaceFromQualif(); // n'importe quelle touche lance la course
   if (e.key === 'm' || e.key === 'M') Music.toggleMute(); // M = couper/remettre le son
 });
@@ -54242,10 +54455,15 @@ function animate() {
   const dt = Math.min(clock.getDelta(), 0.05);
   animTime += dt;
 
-  if (raceState === 'qualif') {
+  if (raceState === 'preQualif') {
+    preQualifTimer -= dt;
+    const n = Math.ceil(preQualifTimer);
+    msg.textContent = preQualifTimer > 0.5 ? `⏱️ Qualif dans ${n}…` : '';
+    if (preQualifTimer <= 0) { msg.textContent = ''; startQualif(); }
+  } else if (raceState === 'qualif') {
     qualifClock += dt;
-    const q = qualifPlayer();
-    msg.textContent = `⏱️ Qualification — ${q === p1 ? '🔴 J1' : '🔵 J2'} — ${qualifClock.toFixed(1)}s`;
+    // Pas de gros texte au centre pendant la qualif — l'info est dans le HUD (hud1/hud2)
+    msg.textContent = '';
   } else if (raceState === 'qualifResults') {
     const [a] = [p1, p2].sort((x, y) => x.qualifTime - y.qualifTime);
     msg.textContent = `⏱️ Qualif : 🔴 ${p1.qualifTime.toFixed(1)}s | 🔵 ${p2.qualifTime.toFixed(1)}s — 🏆 ${a === p1 ? '🔴 J1' : '🔵 J2'} EN POLE ! (touche = départ)`;
@@ -54331,9 +54549,9 @@ function animate() {
     ? `🏁 ${p === p1 ? 'J1' : 'J2'} a fini en ${p.finishTime.toFixed(1)}s !`
     : raceState === 'qualif'
       ? (p.qualifTime !== null ? `⏱️ qualif ${p.qualifTime.toFixed(1)}s ✓` : isQualifActive(p) ? `⏱️ qualif — ${qualifClock.toFixed(1)}s` : '⏱️ en attente…')
-      : `Tour ${p.lap}/${TOTAL_LAPS} — ${Math.abs(p.speed * 3.6).toFixed(0)} km/h`
-        + (p.bestLap !== null ? ` — ⏱️ record ${p.bestLap.toFixed(1)}s` : '');
-  hud1.textContent = `🔴 J1 — ${fmt(p1)}${p1.item ? '  ' + p1.item.icon : ''}${p1.star > 0 ? ' ✨' : ''}`;
+      : `Tour ${p.lap}/${TOTAL_LAPS} — ${Math.abs(p.speed * 3.6).toFixed(0)} km/h — 🛞 ${Math.round(p.tires)}%`
+        + (p.inPit ? ' 🔧 PIT' : '') + (p.bestLap !== null ? ` — ⏱️ record ${p.bestLap.toFixed(1)}s` : '');
+  hud1.textContent = `${CIRCUITS[circuitIndex].name} — 🔴 J1 — ${fmt(p1)}${p1.item ? '  ' + p1.item.icon : ''}${p1.star > 0 ? ' ✨' : ''}`;
   hud2.textContent = `🔵 J2 — ${fmt(p2)}${p2.item ? '  ' + p2.item.icon : ''}${p2.star > 0 ? ' ✨' : ''}`;
   if (raceState === 'finished') {
     let winner = players[0];
@@ -54351,6 +54569,13 @@ animate();
 window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+// Hook de debug pour les tests automatisés
+window.__DEBUG = { scene, samples, ROAD_HALF, SAMPLES, itemBoxes, boostPads, circuitIndex, CIRCUITS, nearestOnTrack };
+
+// Affiche le nombre de bots dans le HUD
+const nbBotsEl = document.getElementById('nb-bots');
+if (nbBotsEl) nbBotsEl.textContent = NB_BOTS;
 </script>
 </body>
 </html>
