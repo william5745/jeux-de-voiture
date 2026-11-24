@@ -53854,7 +53854,7 @@ function makePlayer(kart, startIndex, keys, color, bot) {
     boost: 0, drift: 0, turbo: 0, turn: 0,
     item: null, hit: 0, star: 0, useItem: false,
     lapStart: 0, bestLap: null, lastLap: null,
-    qualifTime: null, prevIdx: startIndex,
+    qualifTime: null, prevIdx: startIndex, qualifHalf: false,
     bot: !!bot,
     color
   };
@@ -54054,9 +54054,11 @@ function updatePlayer(p, dt) {
     pad.mesh.material.emissive.setHex(pad.cooldown > 0 ? 0x003344 : 0x0088aa);
   }
 
-  // Qualification : un tour chrono = franchir la ligne de départ
+  // Qualification : un tour chrono = franchir la ligne de départ APRÈS avoir
+  // dépassé la moitié du circuit (sinon le départ compterait comme un tour)
   if (raceState === 'qualif' && !p.bot) {
-    if (isQualifActive(p) && p.prevIdx > SAMPLES - 40 && near.index < 40 && p.qualifTime === null) {
+    if (near.index > SAMPLES / 2 - 8 && near.index < SAMPLES / 2 + 8) p.qualifHalf = true;
+    if (isQualifActive(p) && p.qualifHalf && p.prevIdx > SAMPLES - 40 && near.index < 40 && p.qualifTime === null) {
       p.qualifTime = qualifClock;   // J1/J2 a bouclé un tour complet -> son temps est validé
       qualifIdx++;
       qualifClock = 0;              // le chrono repart à zéro pour le joueur suivant
@@ -54265,6 +54267,7 @@ function startQualif() {
   qualifClock = 0;
   qualifIdx = 0;
   p1.qualifTime = null; p2.qualifTime = null;
+  p1.qualifHalf = false; p2.qualifHalf = false;
 }
 // Course lancée après la qualif : grille ordonnée par les temps (pole = plus rapide)
 function startRaceFromQualif() {
@@ -54395,7 +54398,7 @@ function animate() {
     ? `🏁 ${p === p1 ? 'J1' : 'J2'} a fini en ${p.finishTime.toFixed(1)}s !`
     : raceState === 'qualif'
       ? (p.qualifTime !== null ? `⏱️ qualif ${p.qualifTime.toFixed(1)}s ✓` : isQualifActive(p) ? `⏱️ qualif — ${qualifClock.toFixed(1)}s` : '⏱️ en attente…')
-      : `Tour ${Math.min(p.lap, TOTAL_LAPS)}/${TOTAL_LAPS} — ${Math.abs(p.speed * 3.6).toFixed(0)} km/h`
+      : `Tour ${p.lap}/${TOTAL_LAPS} — ${Math.abs(p.speed * 3.6).toFixed(0)} km/h`
         + (p.bestLap !== null ? ` — ⏱️ record ${p.bestLap.toFixed(1)}s` : '');
   hud1.textContent = `🔴 J1 — ${fmt(p1)}${p1.item ? '  ' + p1.item.icon : ''}${p1.star > 0 ? ' ✨' : ''}`;
   hud2.textContent = `🔵 J2 — ${fmt(p2)}${p2.item ? '  ' + p2.item.icon : ''}${p2.star > 0 ? ' ✨' : ''}`;
