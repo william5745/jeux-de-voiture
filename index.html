@@ -478,24 +478,50 @@ const boostMat = new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x0
 // Zone de stands (changement de pneus) — allée des stands à DROITE de la piste, près de la ligne de départ
 const pitPads = [];
 {
-  // Ruban d'asphalte pour l'allée des stands (côté droit = offset négatif)
-  const pitRoadMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.95 });
-  scene.add(buildRibbon(-(ROAD_HALF + 4.5), 6, 0.02, pitRoadMat));
-  // Ligne orange délimitant l'allée des stands côté piste
-  const pitLineMat = new THREE.MeshStandardMaterial({ color: 0xff9800, emissive: 0xcc6600, emissiveIntensity: 0.6 });
-  for (let i = 0; i < SAMPLES; i += 4) {
+  // Ruban d'asphalte pour l'allée des stands (côté droit = offset négatif), plus large et visible
+  const pitRoadMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.9 });
+  scene.add(buildRibbon(-(ROAD_HALF + 5), 8, 0.02, pitRoadMat));
+  // Lignes blanches délimitant l'allée des stands (des deux côtés)
+  const pitLineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 });
+  const pitOrangeMat = new THREE.MeshStandardMaterial({ color: 0xff9800, emissive: 0xcc6600, emissiveIntensity: 0.8 });
+  for (let i = 0; i < SAMPLES; i += 3) {
     const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
     const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-    // n'afficher la ligne que dans la zone de pit (autour de la ligne de départ)
-    let d0 = Math.abs(i - 0); d0 = Math.min(d0, SAMPLES - d0);
+    let d0 = Math.abs(i); d0 = Math.min(d0, SAMPLES - d0);
     if (d0 < SAMPLES * 0.08) {
-      const seg = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.4), pitLineMat);
-      seg.rotation.x = -Math.PI / 2;
-      seg.rotation.z = Math.atan2(-t.x, -t.z);
-      seg.position.copy(p).addScaledVector(side, -(ROAD_HALF + 1.5));
-      seg.position.y = 0.04;
-      scene.add(seg);
+      // ligne côté piste (orange)
+      const seg1 = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 0.5), pitOrangeMat);
+      seg1.rotation.x = -Math.PI / 2;
+      seg1.rotation.z = Math.atan2(-t.x, -t.z);
+      seg1.position.copy(p).addScaledVector(side, -(ROAD_HALF + 1));
+      seg1.position.y = 0.04;
+      scene.add(seg1);
+      // ligne côté extérieur (blanche)
+      const seg2 = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 0.5), pitLineMat);
+      seg2.rotation.x = -Math.PI / 2;
+      seg2.rotation.z = Math.atan2(-t.x, -t.z);
+      seg2.position.copy(p).addScaledVector(side, -(ROAD_HALF + 9));
+      seg2.position.y = 0.04;
+      scene.add(seg2);
     }
+  }
+  // "STANDS" peint sur le sol de l'allée
+  {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#444444'; ctx.fillRect(0, 0, 512, 128);
+    ctx.fillStyle = '#ff9800'; ctx.font = 'bold 80px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('PIT LANE', 256, 68);
+    const tex = new THREE.CanvasTexture(c);
+    const label = new THREE.Mesh(new THREE.PlaneGeometry(14, 3.5),
+      new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9 }));
+    const p0 = samples[Math.floor(SAMPLES * 0.02)], t0 = curve.getTangentAt(0.02);
+    const s0 = new THREE.Vector3(-t0.z, 0, t0.x).normalize();
+    label.rotation.x = -Math.PI / 2;
+    label.rotation.z = Math.atan2(-t0.x, -t0.z);
+    label.position.copy(p0).addScaledVector(s0, -(ROAD_HALF + 5));
+    label.position.y = 0.05;
+    scene.add(label);
   }
   // Panneau "PIT" au début de l'allée
   {
@@ -506,13 +532,24 @@ const pitPads = [];
     ctx.fillText('PIT', 128, 68);
     const tex = new THREE.CanvasTexture(c);
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(6, 3),
-      new THREE.MeshStandardMaterial({ map: tex, side: THREE.DoubleSide }));
+      new THREE.MeshStandardMaterial({ map: tex, side: THREE.DoubleSide, emissive: 0x664400, emissiveIntensity: 0.3 }));
     const p0 = samples[Math.floor(SAMPLES * 0.97)], t0 = curve.getTangentAt(0.97);
     const s0 = new THREE.Vector3(-t0.z, 0, t0.x).normalize();
-    sign.position.copy(p0).addScaledVector(s0, -(ROAD_HALF + 8));
-    sign.position.y = 3;
+    sign.position.copy(p0).addScaledVector(s0, -(ROAD_HALF + 10));
+    sign.position.y = 4;
     sign.rotation.y = Math.atan2(-t0.z, t0.x) + Math.PI;
     scene.add(sign);
+    // poteaux du panneau
+    const postG = new THREE.CylinderGeometry(0.12, 0.12, 4, 6);
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+    [-2.5, 2.5].forEach(x => {
+      const post = new THREE.Mesh(postG, postMat);
+      post.position.copy(p0).addScaledVector(s0, -(ROAD_HALF + 10));
+      post.position.x += Math.cos(sign.rotation.y) * x;
+      post.position.z -= Math.sin(sign.rotation.y) * x;
+      post.position.y = 2;
+      scene.add(post);
+    });
   }
   pitPads.push({ index: 0 }); // zone de détection centrée sur la ligne de départ
 }
@@ -996,6 +1033,45 @@ for (let b = 0; b < NB_BOTS; b++) {
 
 const players = [p1, p2, ...bots];
 
+// Mécaniciens (personnages 3D) pour les arrêts aux stands — 3 par joueur, cachés par défaut
+function makeMechanic(color) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.22, 0.26, 0.7, 6),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.7 })
+  );
+  body.position.y = 0.55; body.castShadow = true;
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.18, 8, 6),
+    new THREE.MeshStandardMaterial({ color: 0xffd9b3, roughness: 0.7 })
+  );
+  head.position.y = 1.1; head.castShadow = true;
+  const cap = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.2, 0.2, 0.08, 8),
+    new THREE.MeshStandardMaterial({ color: 0x222222 })
+  );
+  cap.position.y = 1.24;
+  // bras (pour l'animation de "travail")
+  const armL = new THREE.Mesh(
+    new THREE.BoxGeometry(0.1, 0.5, 0.1),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.7 })
+  );
+  armL.position.set(-0.32, 0.65, 0);
+  armL.rotation.z = 0.6;
+  const armR = armL.clone();
+  armR.position.x = 0.32;
+  armR.rotation.z = -0.6;
+  g.add(body, head, cap, armL, armR);
+  g.userData.armL = armL;
+  g.userData.armR = armR;
+  g.visible = false;
+  scene.add(g);
+  return g;
+}
+for (const p of players) {
+  p.mechanics = [makeMechanic(0xff6f00), makeMechanic(0xff6f00), makeMechanic(0x333333)];
+}
+
 /* ============================= IA (BOTS) ============================= */
 // Le bot vise un point de la piste devant lui et tourne en conséquence.
 function wrapAngle(a) {
@@ -1222,7 +1298,7 @@ function updatePlayer(p, dt) {
 
   // Usure des pneus : diminue avec la distance parcourue
   if (raceState === 'racing' && !p.finished) {
-    p.tires = Math.max(0, p.tires - Math.abs(p.speed) * dt * 0.12);
+    p.tires = Math.max(0, p.tires - Math.abs(p.speed) * dt * 0.018); // usure lente : ~4 tours avant le pit
   }
 
   // Zone de stands : si le kart est dans l'allée des stands (à droite) et ralentit, on change les pneus
@@ -1230,13 +1306,31 @@ function updatePlayer(p, dt) {
   if (p.inPitLane && Math.abs(p.speed) < 4) {
     p.inPit = true;
     p.pitTimer += dt;
-    if (p.pitTimer >= 2) { // 2 secondes à l'arrêt dans l'allée = pneus changés
+    // Mécaniciens autour du kart, animés
+    if (p.mechanics) {
+      p.mechanics.forEach((m, i) => {
+        m.visible = true;
+        const a = p.heading + Math.PI + (i - 1) * 0.9; // répartis autour de l'arrière du kart
+        m.position.set(
+          p.pos.x + Math.sin(a) * 1.6,
+          0,
+          p.pos.z + Math.cos(a) * 1.6
+        );
+        m.rotation.y = Math.atan2(p.pos.x - m.position.x, p.pos.z - m.position.z);
+        // animation : les bras bougent (travail sur les roues)
+        const t = performance.now() * 0.008;
+        m.userData.armL.rotation.x = Math.sin(t + i) * 0.8;
+        m.userData.armR.rotation.x = Math.sin(t + i + Math.PI) * 0.8;
+      });
+    }
+    if (p.pitTimer >= 7) { // 7 secondes à l'arrêt dans l'allée = pneus changés
       p.tires = 100;
       p.pitTimer = 0;
       spawnParticle(p.pos.x, 1, p.pos.z, 0xff9800, 0.6, 1.2);
     }
   } else {
     p.pitTimer = 0;
+    if (p.mechanics) p.mechanics.forEach(m => { m.visible = false; });
   }
 
   // Qualification : un tour chrono = franchir la ligne de départ APRÈS avoir
@@ -1555,7 +1649,7 @@ function animate() {
     : raceState === 'qualif'
       ? (p.qualifTime !== null ? `⏱️ qualif ${p.qualifTime.toFixed(1)}s ✓` : isQualifActive(p) ? `⏱️ qualif — ${qualifClock.toFixed(1)}s` : '⏱️ en attente…')
       : `Tour ${p.lap}/${TOTAL_LAPS} — ${Math.abs(p.speed * 3.6).toFixed(0)} km/h — 🛞 ${Math.round(p.tires)}%`
-        + (p.inPit ? ' 🔧 PIT' : '') + (p.bestLap !== null ? ` — ⏱️ record ${p.bestLap.toFixed(1)}s` : '');
+        + (p.inPit ? ` 🔧 PIT ${Math.ceil(7 - p.pitTimer)}s` : '') + (p.bestLap !== null ? ` — ⏱️ record ${p.bestLap.toFixed(1)}s` : '');
   hud1.textContent = `${CIRCUITS[circuitIndex].name} — 🔴 J1 — ${fmt(p1)}${p1.item ? '  ' + p1.item.icon : ''}${p1.star > 0 ? ' ✨' : ''}`;
   hud2.textContent = `🔵 J2 — ${fmt(p2)}${p2.item ? '  ' + p2.item.icon : ''}${p2.star > 0 ? ' ✨' : ''}`;
   if (raceState === 'finished') {
