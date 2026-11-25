@@ -1,6 +1,7 @@
 // Catalogue d'objets 3D partagé entre bibliotheque.html et editeur.html
-// THREE est fourni globalement par la page (window.__THREE) pour éviter les problèmes d'importmap imbriqués
-const THREE = window.__THREE;
+// (source unique : ne pas dupliquer dans les pages)
+// L'importmap des pages mappe 'three' -> ./three.module.js, y compris pour ce module.
+import * as THREE from 'three';
 
 export const library = {
   kart: {

@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Éditeur de carte — Turbo Circuit</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
+    font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: #eee; }
+  #app { display: flex; height: 100%; }
+  #sidebar { width: 280px; min-width: 280px; background: #16213e; border-right: 1px solid #0f3460;
+    display: flex; flex-direction: column; }
+  #sidebar h1 { font-size: 18px; padding: 16px; margin: 0; background: #0f3460; color: #ffe14d; }
+  #categories { flex: 1; overflow-y: auto; padding: 8px; }
+  .cat-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #8ab4f8;
+    margin: 12px 8px 4px; }
+  .obj-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin: 2px 0;
+    border-radius: 8px; cursor: pointer; transition: background 0.15s; }
+  .obj-item:hover { background: #1f3a6e; }
+  .obj-item.active { background: #e94560; color: #fff; }
+  .obj-item .icon { font-size: 22px; width: 30px; text-align: center; }
+  .obj-item .name { font-size: 14px; }
+  #viewer { flex: 1; position: relative; background: #1a1a2e; }
+  #viewer canvas { display: block; }
+  #circuits-bar { position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; flex-wrap: wrap; max-width: 55%; }
+  #circuits-bar button { padding: 6px 10px; border: 1px solid #0f3460; border-radius: 8px;
+    background: rgba(15,52,96,0.85); color: #eee; cursor: pointer; font-size: 12px; font-weight: bold; }
+  #circuits-bar button:hover { background: #1f3a6e; }
+  #circuits-bar button.active { background: #e94560; color: #fff; border-color: #e94560; }
+  #obj-label { position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.6); padding: 8px 24px; border-radius: 20px; font-size: 20px;
+    font-weight: bold; color: #ffe14d; pointer-events: none; }
+  #hint { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    font-size: 12px; color: rgba(255,255,255,0.6); pointer-events: none; white-space: nowrap; }
+  #props { width: 300px; min-width: 300px; background: #16213e; border-left: 1px solid #0f3460;
+    padding: 16px; overflow-y: auto; }
+  #props h2 { font-size: 16px; margin: 16px 0 12px; color: #ffe14d; }
+  #props h2:first-child { margin-top: 0; }
+  .prop-row { margin-bottom: 10px; }
+  .prop-row label { display: block; font-size: 12px; color: #8ab4f8; margin-bottom: 3px; }
+  .prop-row input[type="range"] { width: 100%; }
+  .prop-row input[type="color"] { width: 100%; height: 30px; border: none; border-radius: 6px;
+    cursor: pointer; background: none; }
+  .prop-row input[type="number"], .prop-row input[type="text"] { width: 100%; padding: 6px 8px;
+    border: 1px solid #0f3460; border-radius: 6px; background: #0f3460; color: #eee; font-size: 13px; }
+  .prop-row .val { font-size: 12px; color: #ccc; float: right; }
+  .prop-row.check label { color: #eee; font-size: 13px; cursor: pointer; }
+  .prop-row.check input { margin-right: 6px; }
+  .vide { font-size: 13px; color: rgba(255,255,255,0.5); font-style: italic; }
+  #actions { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; }
+  #actions button { padding: 8px; border: none; border-radius: 8px; cursor: pointer;
+    font-weight: bold; font-size: 13px; }
+  #btn-jeu { background: #2e7d32; color: #fff; }
+  #btn-reload-monde { background: #0f3460; color: #8ab4f8; }
+  #btn-export { background: #e94560; color: #fff; }
+  #btn-import { background: #0f3460; color: #eee; }
+  #btn-clear { background: #333; color: #ff8888; }
+  #liste-objets { display: flex; flex-direction: column; gap: 4px; }
+  #suppr-types { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+  #suppr-types .suppr-type { padding: 5px 8px; border: 1px solid #7a2030; border-radius: 6px; cursor: pointer;
+    background: rgba(122,32,48,0.25); color: #ff8888; font-size: 12px; text-align: left; }
+  #suppr-types .suppr-type:hover { background: rgba(122,32,48,0.5); }
+  .place-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px;
+    cursor: pointer; background: #0f3460; font-size: 13px; }
+  .place-item:hover { background: #1f3a6e; }
+  .place-item.active { background: #e94560; color: #fff; }
+  .place-item .icon { font-size: 18px; }
+  .place-item .name { flex: 1; }
+  .place-item .name em { font-style: normal; opacity: 0.7; font-size: 11px; }
+  .place-item .del { border: none; background: rgba(0,0,0,0.3); color: #ff8888; border-radius: 6px;
+    width: 22px; height: 22px; cursor: pointer; font-size: 12px; }
+  #no3d { display: none; position: absolute; inset: 0; place-items: center; text-align: center;
+    color: #ff8888; font-size: 16px; padding: 20px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <h1>🗺️ Éditeur de carte</h1>
+    <div id="categories">
+      <div class="cat-title">Véhicules</div>
+      <div class="obj-item" data-id="kart"><span class="icon">🏎️</span><span class="name">Kart de course</span></div>
+      <div class="cat-title">Nature</div>
+      <div class="obj-item" data-id="tree"><span class="icon">🌲</span><span class="name">Arbre (pin)</span></div>
+      <div class="obj-item" data-id="bush"><span class="icon">🌿</span><span class="name">Buisson</span></div>
+      <div class="obj-item" data-id="flower"><span class="icon">🌸</span><span class="name">Fleur</span></div>
+      <div class="cat-title">Circuit</div>
+      <div class="obj-item" data-id="barrier"><span class="icon">🚧</span><span class="name">Barrière</span></div>
+      <div class="obj-item" data-id="wall"><span class="icon">🧱</span><span class="name">Mur de sécurité</span></div>
+      <div class="obj-item" data-id="itembox"><span class="icon">❓</span><span class="name">Boîte objet</span></div>
+      <div class="obj-item" data-id="boost"><span class="icon">⚡</span><span class="name">Zone de boost</span></div>
+      <div class="obj-item" data-id="arch"><span class="icon">🎪</span><span class="name">Arche de départ</span></div>
+      <div class="obj-item" data-id="sign"><span class="icon">🪧</span><span class="name">Panneau publicitaire</span></div>
+      <div class="obj-item" data-id="pitbox"><span class="icon">🅿️</span><span class="name">Box de stand</span></div>
+      <div class="obj-item" data-id="pitsign"><span class="icon">🚩</span><span class="name">Panneau Arrêt au stand</span></div>
+      <div class="cat-title">Objets</div>
+      <div class="obj-item" data-id="shell"><span class="icon">🐢</span><span class="name">Carapace</span></div>
+      <div class="obj-item" data-id="mushroom"><span class="icon">🍄</span><span class="name">Champignon</span></div>
+      <div class="obj-item" data-id="star"><span class="icon">⭐</span><span class="name">Étoile</span></div>
+      <div class="obj-item" data-id="mechanic"><span class="icon">👨‍🔧</span><span class="name">Mécanicien</span></div>
+      <div class="cat-title">Décor</div>
+      <div class="obj-item" data-id="cloud"><span class="icon">☁️</span><span class="name">Nuage</span></div>
+      <div class="obj-item" data-id="mountain"><span class="icon">⛰️</span><span class="name">Montagne</span></div>
+      <div class="obj-item" data-id="stand"><span class="icon">👥</span><span class="name">Tribune</span></div>
+      <div class="obj-item" data-id="aco"><span class="icon">🏢</span><span class="name">Tour ACO</span></div>
+      <div class="obj-item" data-id="pit"><span class="icon">🏗️</span><span class="name">Bâtiment des stands</span></div>
+    </div>
+  </div>
+  <div id="viewer">
+    <div id="circuits-bar"></div>
+    <div id="obj-label">🛠️ Outil : 👥 Tribune</div>
+    <div id="no3d">⚠️ Ouvrez cette page via le serveur local :<br><b>http://localhost:8080/editeur.html</b></div>
+    <div id="hint">Glisser (clic gauche sur le sol, droit ou milieu) : déplacer la vue · Clic droit glissé : tourner / incliner · Molette : zoomer vers le curseur (sur un objet : pivoter ±15°) · V : vue de dessus · Clic gauche : placer / sélectionner · Glisser un objet : le déplacer · R : pivoter 45° · Suppr : supprimer · La piste est en lecture seule</div>
+  </div>
+  <div id="props">
+    <h2>⚙️ Propriétés</h2>
+    <div id="prop-list"></div>
+    <h2>🗺️ Carte</h2>
+    <div class="prop-row check">
+      <label><input type="checkbox" id="snap" checked>Aimanter sur la grille (1 unité)</label>
+    </div>
+    <div id="actions">
+      <button id="btn-jeu">🎮 Ouvrir dans le jeu</button>
+      <button id="btn-reload-monde">🔄 Recharger le monde du jeu</button>
+      <button id="btn-export">💾 Exporter en JSON</button>
+      <button id="btn-import">📂 Importer un JSON</button>
+      <button id="btn-clear">🗑️ Tout effacer</button>
+    </div>
+    <p class="vide">Sauvegarde automatique en données : <b>monde.json</b> (+ miroir monde.js). Le jeu <b>jeu.html</b> (ouvert en file://) et index.html le lisent au chargement — fais juste Ctrl+F5 dessus après tes modifs. La piste affichée est en lecture seule.</p>
+    <input type="file" id="file-import" accept=".json,application/json" style="display:none">
+    <h2>📍 Objets placés (<span id="count">0</span>)</h2>
+    <div id="suppr-types"></div>
+    <div id="liste-objets"></div>
+  </div>
+</div>
+
+<script>
+  // Sélection de l'outil dans la sidebar (fonctionne même sans Three.js)
+  document.querySelectorAll('.obj-item').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.obj-item').forEach(x => x.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('obj-label').textContent =
+        '🛠️ Outil : ' + el.querySelector('.icon').textContent + ' ' + el.querySelector('.name').textContent;
+      if (window.__setOutil) window.__setOutil(el.dataset.id);
+    });
+  });
+  // Outil par défaut : la tribune
+  document.querySelector('.obj-item[data-id="stand"]').classList.add('active');
+</script>
+
+<script>
+  window.addEventListener('error', e => {
+    const d = document.getElementById('debug-err') || (() => {
+      const el = document.createElement('div');
+      el.id = 'debug-err';
+      el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c00;color:#fff;font:12px monospace;padding:6px;z-index:999;white-space:pre';
+      document.body.appendChild(el);
+      return el;
+    })();
+    d.textContent = 'ERREUR: ' + e.message + ' @ ' + (e.filename||'').split('/').pop() + ':' + e.lineno;
+  });
+</script>
+<script type="importmap">
+{ "imports": { "three": "./three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { library } from './objets.js';
+import { CIRCUITS } from './circuits.js';
+
+const viewer = document.getElementById('viewer');
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(viewer.clientWidth, viewer.clientHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+viewer.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a2e);
+
+/* ---------- Caméra orthographique façon Google Maps ---------- */
+// camAzimut    = rotation de la vue autour de la verticale (0 = haut de l'écran vers -Z)
+// camElevation = angle de la caméra au-dessus du sol (90° = vue de dessus)
+const VIEW_SIZE = 40; // demi-hauteur visible (en unités monde)
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 500);
+const camTarget = new THREE.Vector3(0, 0, 0);
+let camAzimut = 0;
+let camElevation = Math.PI / 2;
+
+function majCamera() {
+  const aspect = viewer.clientWidth / viewer.clientHeight;
+  camera.left = -VIEW_SIZE * aspect;
+  camera.right = VIEW_SIZE * aspect;
+  camera.top = VIEW_SIZE;
+  camera.bottom = -VIEW_SIZE;
+  const dist = 100;
+  const ce = Math.cos(camElevation), se = Math.sin(camElevation);
+  const ca = Math.cos(camAzimut), sa = Math.sin(camAzimut);
+  camera.position.set(
+    camTarget.x + sa * ce * dist,
+    se * dist,
+    camTarget.z + ca * ce * dist
+  );
+  camera.up.set(-se * sa, ce, -se * ca); // à azimut 0, le haut de l'écran = -Z (comme avant)
+  camera.lookAt(camTarget.x, 0, camTarget.z);
+  camera.updateProjectionMatrix();
+}
+majCamera();
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.1);
+dirLight.position.set(30, 60, 20);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(2048, 2048);
+dirLight.shadow.camera.left = -80; dirLight.shadow.camera.right = 80;
+dirLight.shadow.camera.top = 80; dirLight.shadow.camera.bottom = -80;
+dirLight.shadow.camera.far = 200;
+scene.add(dirLight);
+
+/* ---------- Sol + grilles ---------- */
+const TAILLE = 400; // la carte fait 400 x 400 unités (contient tout le circuit du Mans)
+const sol = new THREE.Mesh(
+  new THREE.PlaneGeometry(TAILLE, TAILLE),
+  new THREE.MeshStandardMaterial({ color: 0x16213e, roughness: 0.9 })
+);
+sol.rotation.x = -Math.PI / 2;
+sol.receiveShadow = true;
+scene.add(sol);
+scene.add(new THREE.GridHelper(TAILLE, 20, 0x0f3460, 0x1f3a6e));       // carreaux de 20
+scene.add(new THREE.GridHelper(TAILLE, 200, 0x14294d, 0x14294d));      // carreaux de 2 (discrets)
+
+/* ---------- Circuits (tracés partagés avec le jeu via circuits.js) ---------- */
+const ROAD_HALF = 13; // même demi-largeur que dans le jeu
+const SAMPLES = 600;
+let indexPiste = 0;
+let courbe = null;
+let echantillons = [];
+let routeMesh = null;
+let groupePiste = null;     // route + bordures + lignes + poignées (reconstruit à chaque changement)
+let poignees = [];          // sphères jaunes = points de contrôle déplaçables
+let solsCliquables = [sol]; // surfaces sur lesquelles un clic pose un objet
+
+// La piste fait partie de la couche statique : lecture seule dans l'éditeur
+// (les tracés sont définis dans circuits.js, non modifiables ici).
+function pointsActuels(i) {
+  return CIRCUITS[i].points.map(([x, z]) => new THREE.Vector3(x, 0, z));
+}
+
+// Ruban triangulé le long de la courbe (même principe que buildRibbon du jeu)
+function ruban(offset, largeur, y, materiau) {
+  const verts = [], idx = [];
+  for (let i = 0; i <= SAMPLES; i++) {
+    const p = echantillons[i % SAMPLES];
+    const t = courbe.getTangentAt((i % SAMPLES) / SAMPLES);
+    const cote = new THREE.Vector3(-t.z, 0, t.x).normalize();
+    const a = p.clone().addScaledVector(cote, offset - largeur / 2);
+    const b = p.clone().addScaledVector(cote, offset + largeur / 2);
+    a.y = b.y = y;
+    verts.push(a.x, a.y, a.z, b.x, b.y, b.z);
+  }
+  for (let i = 0; i < SAMPLES; i++) {
+    const k = i * 2;
+    idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  const m = new THREE.Mesh(g, materiau);
+  m.receiveShadow = true;
+  m.userData.route = true;
+  return m;
+}
+
+function majSolsCliquables() {
+  solsCliquables = [sol];
+  if (routeMesh) solsCliquables.push(routeMesh);
+}
+
+// Construit tout le tracé du circuit i : asphalte, bordures, lignes, poignées de points
+function construirePiste(i) {
+  indexPiste = i;
+  if (groupePiste) scene.remove(groupePiste);
+  groupePiste = new THREE.Group();
+  scene.add(groupePiste);
+  poignees = [];
+
+  const pts = pointsActuels(i);
+  courbe = new THREE.CatmullRomCurve3(pts, true, 'catmullrom', 0.6);
+  echantillons = [];
+  for (let k = 0; k < SAMPLES; k++) echantillons.push(courbe.getPointAt(k / SAMPLES));
+
+  // Asphalte
+  routeMesh = ruban(0, ROAD_HALF * 2, 0.01,
+    new THREE.MeshStandardMaterial({ color: 0x45454d, roughness: 0.95 }));
+  groupePiste.add(routeMesh);
+  // Bordures rouge / blanche
+  groupePiste.add(ruban(-ROAD_HALF - 0.8, 1.6, 0.03,
+    new THREE.MeshStandardMaterial({ color: 0xd8342c, roughness: 0.7 })));
+  groupePiste.add(ruban(ROAD_HALF - 0.8, 1.6, 0.03,
+    new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.7 })));
+  reconstruireLignes();
+  // Piste en lecture seule : aucun point déplaçable (couche statique du monde)
+  majSolsCliquables();
+  majBoutonsCircuits();
+}
+
+// Ligne pointillée centrale + ligne de départ (parties "route" du groupe, reconstruites à chaque modif)
+function reconstruireLignes() {
+  const lineMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.6 });
+  for (let k = 0; k < SAMPLES; k += 8) {
+    if ((k / 8) % 2) continue;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 5), lineMat);
+    const t = courbe.getTangentAt(k / SAMPLES);
+    m.rotation.x = -Math.PI / 2;
+    m.rotation.z = Math.atan2(-t.x, -t.z);
+    m.position.copy(echantillons[k]).setY(0.04);
+    m.userData.route = true;
+    groupePiste.add(m);
+  }
+  const c = document.createElement('canvas'); c.width = 64; c.height = 16;
+  const x = c.getContext('2d');
+  for (let a = 0; a < 8; a++) for (let b = 0; b < 2; b++) {
+    x.fillStyle = (a + b) % 2 ? '#111111' : '#ffffff';
+    x.fillRect(a * 8, b * 8, 8, 8);
+  }
+  const ligne = new THREE.Mesh(
+    new THREE.PlaneGeometry(ROAD_HALF * 2, 4),
+    new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(c), roughness: 0.6 })
+  );
+  const t0 = courbe.getTangentAt(0);
+  ligne.rotation.x = -Math.PI / 2;
+  ligne.rotation.z = Math.atan2(-t0.x, -t0.z);
+  ligne.position.copy(echantillons[0]).setY(0.05);
+  ligne.userData.route = true;
+  groupePiste.add(ligne);
+}
+
+// Recalcule le tracé après déplacement d'une poignée (poignées conservées telles quelles)
+function reconstruireTracé() {
+  echantillons = [];
+  for (let k = 0; k < SAMPLES; k++) echantillons.push(courbe.getPointAt(k / SAMPLES));
+  [...groupePiste.children].forEach(c => { if (c.userData.route) groupePiste.remove(c); });
+  routeMesh = ruban(0, ROAD_HALF * 2, 0.01,
+    new THREE.MeshStandardMaterial({ color: 0x45454d, roughness: 0.95 }));
+  groupePiste.add(routeMesh);
+  groupePiste.add(ruban(-ROAD_HALF - 0.8, 1.6, 0.03,
+    new THREE.MeshStandardMaterial({ color: 0xd8342c, roughness: 0.7 })));
+  groupePiste.add(ruban(ROAD_HALF - 0.8, 1.6, 0.03,
+    new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.7 })));
+  reconstruireLignes();
+  majSolsCliquables();
+}
+
+// Barre de sélection du circuit (boutons générés depuis CIRCUITS)
+function majBoutonsCircuits() {
+  const bar = document.getElementById('circuits-bar');
+  if (!bar.dataset.init) {
+    bar.dataset.init = '1';
+    CIRCUITS.forEach((c, i) => {
+      const b = document.createElement('button');
+      b.textContent = c.name;
+      b.title = 'Afficher ce circuit dans l\'éditeur';
+      b.addEventListener('click', () => construirePiste(i));
+      bar.appendChild(b);
+    });
+  }
+  [...bar.children].forEach((b, i) => b.classList.toggle('active', i === indexPiste));
+}
+
+/* ---------- État de l'éditeur ---------- */
+let outilActif = 'stand';
+window.__setOutil = id => { outilActif = id; construirPropsVide(); };
+
+let places = [];       // { id, x, z, rotation, params, mesh }
+let selection = null;  // objet placé sélectionné
+
+const selectionBox = new THREE.BoxHelper(new THREE.Object3D(), 0xffe14d);
+selectionBox.visible = false;
+scene.add(selectionBox);
+
+const raycaster = new THREE.Raycaster();
+const souris = new THREE.Vector2();
+
+function majSouris(e) {
+  const r = renderer.domElement.getBoundingClientRect();
+  souris.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+  souris.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+}
+function pointSol(e) {
+  majSouris(e);
+  raycaster.setFromCamera(souris, camera);
+  const hit = raycaster.intersectObjects(solsCliquables, false)[0];
+  return hit ? hit.point : null;
+}
+function objetEn(e) {
+  majSouris(e);
+  raycaster.setFromCamera(souris, camera);
+  const hit = raycaster.intersectObjects(places.map(p => p.mesh), true)[0];
+  if (!hit) return null;
+  let o = hit.object;
+  while (o && !places.some(p => p.mesh === o)) o = o.parent;
+  return o ? places.find(p => p.mesh === o) : null;
+}
+
+/* ---------- Placement / sélection / suppression ---------- */
+function placerObjet(id, x, z) {
+  const def = library[id];
+  const rec = { id, x, z, rotation: 0, params: JSON.parse(JSON.stringify(def.params)) };
+  rec.mesh = def.build(rec.params);
+  rec.mesh.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  rec.mesh.position.set(x, 0, z);
+  scene.add(rec.mesh);
+  places.push(rec);
+  selectionner(rec);
+  majListe();
+  sauvegarder();
+}
+
+function supprimer(rec) {
+  scene.remove(rec.mesh);
+  places = places.filter(p => p !== rec);
+  if (selection === rec) selectionner(null);
+  majListe();
+  sauvegarder();
+}
+
+function selectionner(rec) {
+  selection = rec;
+  if (rec) {
+    selectionBox.setFromObject(rec.mesh);
+    selectionBox.visible = true;
+  } else {
+    selectionBox.visible = false;
+  }
+  construirProps();
+  majListe();
+}
+
+function pivoter(rec, deg) {
+  rec.rotation = ((rec.rotation + deg) % 360 + 360) % 360;
+  rec.mesh.rotation.y = rec.rotation * Math.PI / 180;
+  if (selection === rec) selectionBox.setFromObject(rec.mesh);
+  construirProps();
+  majListe();
+  sauvegarder();
+}
+
+function definirRotation(rec, deg) {
+  rec.rotation = ((deg % 360) + 360) % 360;
+  rec.mesh.rotation.y = rec.rotation * Math.PI / 180;
+  if (selection === rec) selectionBox.setFromObject(rec.mesh);
+  majListe();
+  sauvegarder();
+}
+
+function reconstruire(rec) {
+  scene.remove(rec.mesh);
+  rec.mesh = library[rec.id].build(rec.params);
+  rec.mesh.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  rec.mesh.position.set(rec.x, 0, rec.z);
+  rec.mesh.rotation.y = rec.rotation * Math.PI / 180;
+  scene.add(rec.mesh);
+  if (selection === rec) selectionBox.setFromObject(rec.mesh);
+  sauvegarder();
+}
+
+/* ---------- Souris (navigation façon Google Maps) ---------- */
+let dragPan = false, dragOrbite = false, dragObjet = null, px = 0, py = 0, downX = 0, downY = 0, moved = false;
+
+// Glisser la carte : déplace la vue proportionnellement au mouvement de la souris,
+// en tenant compte de l'azimut et de l'inclinaison de la caméra.
+function deplacerVue(dx, dy) {
+  const fH = (VIEW_SIZE * 2) / viewer.clientHeight / camera.zoom; // unités monde par pixel (horizontal)
+  const se = Math.max(Math.sin(camElevation), 0.2);
+  const fV = fH / se;                                              // vertical : la vue inclinée étire le sol
+  const ca = Math.cos(camAzimut), sa = Math.sin(camAzimut);
+  camTarget.x = THREE.MathUtils.clamp(camTarget.x - dx * ca * fH - dy * sa * fV, -TAILLE / 2, TAILLE / 2);
+  camTarget.z = THREE.MathUtils.clamp(camTarget.z + dx * sa * fH - dy * ca * fV, -TAILLE / 2, TAILLE / 2);
+  majCamera();
+}
+
+renderer.domElement.addEventListener('mousedown', e => {
+  downX = e.clientX; downY = e.clientY; moved = false;
+  if (e.button === 2 || e.button === 1) { // clic droit ou milieu : tourner / incliner la vue
+    e.preventDefault();
+    dragOrbite = true; px = e.clientX; py = e.clientY;
+  }
+  if (e.button === 0) {
+    // Clic sur un objet placé : sélection + début d'un éventuel glisser-déposer
+    // (la piste, elle, est en lecture seule : on ne peut pas la modifier ici)
+    const rec = objetEn(e);
+    if (rec) { dragObjet = rec; selectionner(rec); px = e.clientX; py = e.clientY; }
+    else { dragPan = true; px = e.clientX; py = e.clientY; } // clic gauche sur le sol : déplacer la carte
+  }
+});
+window.addEventListener('mouseup', e => {
+  if (e.button === 2 || e.button === 1) dragOrbite = false;
+  if (e.button === 0) {
+    if (dragObjet) {
+      if (moved) { construirProps(); sauvegarder(); } // glisser-déposer terminé
+      dragObjet = null;
+      return;
+    }
+    if (dragPan) {
+      dragPan = false;
+      if (!moved && e.target === renderer.domElement) clicGauche(e); // simple clic = placer l'objet
+    }
+  }
+});
+window.addEventListener('mousemove', e => {
+  if (dragOrbite) {
+    // comme Google Maps : horizontal = tourner, vertical = incliner (20° à 90°)
+    const dx = e.clientX - px, dy = e.clientY - py;
+    px = e.clientX; py = e.clientY;
+    if (Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY) > 4) moved = true;
+    camAzimut -= dx * 0.005;
+    camElevation = THREE.MathUtils.clamp(camElevation - dy * 0.005, 0.35, Math.PI / 2);
+    majCamera();
+  } else if (dragPan) {
+    const dx = e.clientX - px, dy = e.clientY - py;
+    px = e.clientX; py = e.clientY;
+    if (Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY) > 4) moved = true;
+    if (moved) deplacerVue(dx, dy);
+  } else if (dragObjet) {
+    // Glisser-déposer : l'objet suit la souris sur le sol (avec aimantation)
+    if (Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY) > 4) moved = true;
+    if (moved) {
+      const pt = pointSol(e);
+      if (pt) {
+        const snap = document.getElementById('snap').checked;
+        const f = v => snap ? Math.round(v) : Math.round(v * 10) / 10;
+        dragObjet.x = f(pt.x);
+        dragObjet.z = f(pt.z);
+        dragObjet.mesh.position.set(dragObjet.x, 0, dragObjet.z);
+        selectionBox.setFromObject(dragObjet.mesh);
+        majListe();
+      }
+    }
+  } else {
+    renderer.domElement.style.cursor = objetEn(e) ? 'pointer' : 'default';
+  }
+});
+renderer.domElement.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rec = objetEn(e);
+  if (rec) {
+    selectionner(rec);
+    pivoter(rec, e.deltaY > 0 ? 15 : -15);
+    return;
+  }
+  // Zoom façon Google Maps : le point du sol sous le curseur reste fixe
+  const pt = pointSol(e);
+  const oldZoom = camera.zoom;
+  camera.zoom = THREE.MathUtils.clamp(camera.zoom * (e.deltaY > 0 ? 0.9 : 1.1), 0.2, 5);
+  if (pt) {
+    const ratio = oldZoom / camera.zoom;
+    camTarget.x += (pt.x - camTarget.x) * (1 - ratio);
+    camTarget.z += (pt.z - camTarget.z) * (1 - ratio);
+  }
+  camera.updateProjectionMatrix();
+  majCamera();
+}, { passive: false });
+renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+
+function clicGauche(e) {
+  const rec = objetEn(e);
+  if (rec) { selectionner(rec); return; }
+  const pt = pointSol(e);
+  if (!pt) return;
+  const snap = document.getElementById('snap').checked;
+  const f = v => snap ? Math.round(v) : Math.round(v * 10) / 10;
+  placerObjet(outilActif, f(pt.x), f(pt.z));
+}
+
+/* ---------- Clavier ---------- */
+window.addEventListener('keydown', e => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selection) {
+    supprimer(selection);
+    e.preventDefault();
+  } else if ((e.key === 'r' || e.key === 'R') && selection) {
+    pivoter(selection, e.shiftKey ? 15 : 45);
+  } else if (e.key === 'v' || e.key === 'V' || e.key === 'Home') {
+    // Remet la vue de dessus par défaut (azimut 0, élévation 90°)
+    camAzimut = 0;
+    camElevation = Math.PI / 2;
+    majCamera();
+  }
+});
+
+/* ---------- Panneau de propriétés ---------- */
+function construirPropsVide() {
+  if (!selection) construirProps();
+}
+
+function construirProps() {
+  const list = document.getElementById('prop-list');
+  list.innerHTML = '';
+  if (!selection) {
+    const p = document.createElement('p');
+    p.className = 'vide';
+    p.textContent = 'Clic sur la carte pour placer « ' + library[outilActif].icon + ' ' + library[outilActif].name + ' », ou sélectionne un objet placé dans la liste.';
+    list.appendChild(p);
+    return;
+  }
+  const def = library[selection.id];
+  const titre = document.createElement('p');
+  titre.className = 'vide';
+  titre.textContent = def.icon + ' ' + def.name;
+  list.appendChild(titre);
+
+  // champs communs à tous les objets placés
+  ajouterChampNombre(list, 'Position X', selection.x, 0.5, v => {
+    selection.x = v; selection.mesh.position.x = v;
+    selectionBox.setFromObject(selection.mesh);
+    majListe(); sauvegarder();
+  });
+  ajouterChampNombre(list, 'Position Z', selection.z, 0.5, v => {
+    selection.z = v; selection.mesh.position.z = v;
+    selectionBox.setFromObject(selection.mesh);
+    majListe(); sauvegarder();
+  });
+  ajouterChampRotation(list, selection.rotation);
+
+  // paramètres propres à l'objet (issus de la bibliothèque)
+  Object.entries(def.params).forEach(([key, val]) => {
+    if (typeof val === 'string' && val.startsWith('#')) {
+      const row = document.createElement('div');
+      row.className = 'prop-row';
+      const label = document.createElement('label');
+      label.textContent = key;
+      const input = document.createElement('input');
+      input.type = 'color'; input.value = selection.params[key] || val;
+      input.addEventListener('input', () => {
+        selection.params[key] = input.value;
+        reconstruire(selection);
+      });
+      row.appendChild(label); row.appendChild(input);
+      list.appendChild(row);
+    } else if (typeof val === 'number') {
+      const row = document.createElement('div');
+      row.className = 'prop-row';
+      const label = document.createElement('label');
+      label.textContent = key;
+      const valSpan = document.createElement('span');
+      valSpan.className = 'val'; valSpan.textContent = selection.params[key];
+      label.appendChild(valSpan);
+      const input = document.createElement('input');
+      input.type = 'range';
+      input.min = key === 'scale' ? 0.3 : 1;
+      input.max = key === 'scale' ? 3 : (key === 'rows' ? 10 : 40);
+      input.step = key === 'scale' ? 0.1 : 1;
+      input.value = selection.params[key];
+      input.addEventListener('input', () => {
+        selection.params[key] = parseFloat(input.value);
+        valSpan.textContent = input.value;
+        reconstruire(selection);
+      });
+      row.appendChild(label); row.appendChild(input);
+      list.appendChild(row);
+    } else if (typeof val === 'string') {
+      const row = document.createElement('div');
+      row.className = 'prop-row';
+      const label = document.createElement('label');
+      label.textContent = key;
+      const input = document.createElement('input');
+      input.type = 'text'; input.value = selection.params[key] ?? val;
+      input.addEventListener('input', () => {
+        selection.params[key] = input.value;
+        reconstruire(selection);
+      });
+      row.appendChild(label); row.appendChild(input);
+      list.appendChild(row);
+    }
+  });
+}
+
+function ajouterChampNombre(list, nom, val, step, onChange) {
+  const row = document.createElement('div');
+  row.className = 'prop-row';
+  const label = document.createElement('label');
+  label.textContent = nom;
+  const input = document.createElement('input');
+  input.type = 'number'; input.step = step; input.value = val;
+  input.addEventListener('input', () => {
+    const v = parseFloat(input.value);
+    if (!isNaN(v)) onChange(v);
+  });
+  row.appendChild(label); row.appendChild(input);
+  list.appendChild(row);
+}
+
+function ajouterChampRotation(list, rotation) {
+  const row = document.createElement('div');
+  row.className = 'prop-row';
+  const label = document.createElement('label');
+  label.textContent = 'Rotation (vue de dessus)';
+  const valSpan = document.createElement('span');
+  valSpan.className = 'val'; valSpan.textContent = rotation + '°';
+  label.appendChild(valSpan);
+  const input = document.createElement('input');
+  input.type = 'range'; input.min = 0; input.max = 359; input.step = 1; input.value = rotation;
+  input.addEventListener('input', () => {
+    valSpan.textContent = input.value + '°';
+    definirRotation(selection, parseFloat(input.value));
+  });
+  row.appendChild(label); row.appendChild(input);
+  list.appendChild(row);
+}
+
+/* ---------- Liste des objets placés ---------- */
+function majListe() {
+  document.getElementById('count').textContent = places.length;
+  // Boutons "tout supprimer par type" (ex. toutes les tribunes d'un coup)
+  const suppr = document.getElementById('suppr-types');
+  suppr.innerHTML = '';
+  const parType = {};
+  places.forEach(p => { (parType[p.id] = parType[p.id] || []).push(p); });
+  Object.entries(parType).forEach(([id, liste]) => {
+    const b = document.createElement('button');
+    b.className = 'suppr-type';
+    b.textContent = '✕ tous les ' + library[id].name + ' (' + liste.length + ')';
+    b.addEventListener('click', () => {
+      liste.forEach(p => scene.remove(p.mesh));
+      places = places.filter(p => !liste.includes(p));
+      if (selection && liste.includes(selection)) selectionner(null);
+      majListe();
+      sauvegarder();
+    });
+    suppr.appendChild(b);
+  });
+  const el = document.getElementById('liste-objets');
+  el.innerHTML = '';
+  places.forEach(rec => {
+    const row = document.createElement('div');
+    row.className = 'place-item' + (rec === selection ? ' active' : '');
+    const icon = document.createElement('span');
+    icon.className = 'icon'; icon.textContent = library[rec.id].icon;
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.innerHTML = library[rec.id].name + ' <em>(' + rec.x + ' ; ' + rec.z + ') — ' + rec.rotation + '°</em>';
+    const btn = document.createElement('button');
+    btn.className = 'del'; btn.textContent = '✕'; btn.title = 'Supprimer cet objet';
+    btn.addEventListener('click', ev => { ev.stopPropagation(); supprimer(rec); });
+    row.appendChild(icon); row.appendChild(name); row.appendChild(btn);
+    row.addEventListener('click', () => selectionner(rec));
+    el.appendChild(row);
+  });
+}
+
+/* ---------- Sauvegarde / export / import ---------- */
+function exporterDonnees() {
+  return {
+    version: 1,
+    circuit: indexPiste, // piste = couche statique : mémorisée, mais pas modifiable ici
+    objets: places.map(p => ({ id: p.id, x: p.x, z: p.z, rotation: p.rotation, params: p.params }))
+  };
+}
+
+function sauvegarder() {
+  const data = exporterDonnees();
+  try { localStorage.setItem('turbo-monde', JSON.stringify(data)); } catch (e) { /* stockage indisponible */ }
+  pousserVersJeu(data);
+}
+
+// Pousse le monde en données vers le jeu : le serveur écrit monde.json + le miroir
+// monde.js, lus au chargement par index.html et jeu.html (même ouvert en file://).
+function pousserVersJeu(data) {
+  try {
+    fetch('/__save-monde', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).catch(() => {});
+  } catch (e) { /* le serveur local est peut-être arrêté : localStorage suffit */ }
+}
+
+function chargerDonnees(data) {
+  places.forEach(p => scene.remove(p.mesh));
+  places = [];
+  selectionner(null);
+  (data.objets || []).forEach(o => {
+    if (!library[o.id]) return;
+    const def = library[o.id];
+    const rec = {
+      id: o.id,
+      x: +o.x || 0,
+      z: +o.z || 0,
+      rotation: +o.rotation || 0,
+      params: Object.assign(JSON.parse(JSON.stringify(def.params)), o.params || {})
+    };
+    rec.mesh = def.build(rec.params);
+    rec.mesh.traverse(m => { if (m.isMesh) m.castShadow = true; });
+    rec.mesh.position.set(rec.x, 0, rec.z);
+    rec.mesh.rotation.y = rec.rotation * Math.PI / 180;
+    scene.add(rec.mesh);
+    places.push(rec);
+  });
+  majListe();
+  sauvegarder();
+}
+
+document.getElementById('btn-jeu').addEventListener('click', () => {
+  sauvegarder(); // s'assurer que la dernière modification est bien enregistrée
+  window.open('index.html', '_blank');
+});
+document.getElementById('btn-reload-monde').addEventListener('click', () => {
+  chargerMondeDuJeu(); // recharge monde.json (dernier monde généré/édité)
+});
+document.getElementById('btn-export').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(exporterDonnees(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'carte.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+document.getElementById('btn-import').addEventListener('click', () => {
+  document.getElementById('file-import').click();
+});
+document.getElementById('file-import').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try { chargerDonnees(JSON.parse(reader.result)); }
+    catch (err) { alert('Fichier JSON invalide : ' + err.message); }
+  };
+  reader.readAsText(f);
+  e.target.value = '';
+});
+document.getElementById('btn-clear').addEventListener('click', () => {
+  if (places.length === 0 || confirm('Effacer tous les objets placés sur la carte ?')) {
+    chargerDonnees({ objets: [] });
+  }
+});
+
+/* ---------- Boucle d'affichage ---------- */
+function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+  renderer.setSize(viewer.clientWidth, viewer.clientHeight);
+  majCamera();
+});
+
+/* ---------- Démarrage : construire le circuit + charger le monde du jeu ---------- */
+construirePiste(0);
+construirProps();
+majListe();
+// Charge le monde du jeu : 1) monde.json (poussé par le serveur) 2) localStorage 3) ancien format
+async function chargerMondeDuJeu() {
+  let data = null;
+  try {
+    const r = await fetch('monde.json');
+    if (r.ok) data = await r.json();
+  } catch (e) {}
+  if (!data || !Array.isArray(data.objets) || !data.objets.length) {
+    try { data = JSON.parse(localStorage.getItem('turbo-monde') || 'null'); } catch (e) {}
+  }
+  if (!data || !Array.isArray(data.objets) || !data.objets.length) {
+    try {
+      const c = JSON.parse(localStorage.getItem('turbo-circuit-carte') || 'null');
+      if (c && Array.isArray(c.objets)) data = { circuit: 0, objets: c.objets };
+    } catch (e) {}
+  }
+  if (data && Array.isArray(data.objets) && data.objets.length) {
+    if (Number.isInteger(data.circuit) && CIRCUITS[data.circuit]) construirePiste(data.circuit);
+    chargerDonnees(data);
+  }
+}
+chargerMondeDuJeu();
+</script>
+</body>
+</html>

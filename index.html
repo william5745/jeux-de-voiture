@@ -35,6 +35,8 @@
   .menu-btns button:hover { transform: scale(1.06); background: rgba(30, 136, 229, 1); }
   #menu.hidden { display: none; }
 </style>
+<script src="./monde.js"></script>
+<script src="./carte-editeur.js"></script>
 <script type="importmap">
 { "imports": { "three": "./three.module.js" } }
 </script>
@@ -68,10 +70,13 @@
     <button data-level="2">🤖 Niveau 2 — Difficile</button>
   </div>
   <p>(touches 1-4 = circuit • F = facile • D = difficile)</p>
+  <p><button id="btn-nouveau-monde" style="font-size:14px;padding:8px 16px;cursor:pointer;">🔄 Nouveau monde (régénérer le décor procédural)</button></p>
 </div>
 
 <script type="module">
 import * as THREE from 'three';
+import { library } from './objets.js';
+import { CIRCUITS } from './circuits.js';
 
 /* ============================= SCÈNE ============================= */
 const container = document.getElementById('game');
@@ -147,43 +152,17 @@ scene.add(sun);
 
 /* ============================= CIRCUIT ============================= */
 // Plusieurs circuits au choix (boucles fermées)
-const CIRCUITS = [
-  {
-    name: '🏁 Le Mans',
-    points: [
-      [0, -90], [70, -95], [130, -70], [150, -20], [130, 30], [150, 80],
-      [110, 120], [40, 105], [10, 130], [-50, 125], [-100, 95], [-130, 60],
-      [-110, 10], [-140, -40], [-90, -70]
-    ]
-  },
-  {
-    name: '🐍 Le Serpent',
-    points: [
-      [0, -100], [60, -80], [30, -40], [80, -10], [40, 30], [90, 60],
-      [50, 95], [0, 80], [-40, 110], [-90, 80], [-60, 40], [-110, 10],
-      [-70, -30], [-120, -60], [-60, -90]
-    ]
-  },
-  {
-    name: '🥚 L\'Ovale Turbo',
-    points: [
-      [0, -110], [80, -105], [140, -70], [160, -10], [150, 50],
-      [110, 100], [40, 115], [-40, 110], [-110, 85], [-150, 40],
-      [-160, -20], [-140, -75], [-80, -108]
-    ]
-  },
-  {
-    name: '🏜️ Le Canyon',
-    points: [
-      [0, -80], [50, -95], [110, -80], [130, -40], [100, -10],
-      [140, 20], [110, 55], [60, 45], [30, 80], [-20, 70],
-      [-50, 100], [-100, 90], [-120, 50], [-90, 20], [-130, -10],
-      [-100, -50], [-50, -60]
-    ]
-  }
-];
+
 // Circuit choisi (stocké en localStorage, 0 par défaut)
 const circuitIndex = Math.max(0, Math.min(CIRCUITS.length - 1, parseInt(localStorage.getItem('turboCircuit') || '0')));
+// Tracé éventuellement modifié dans l'éditeur de carte (editeur.html)
+// Priorité au fichier carte-editeur.js (partagé avec jeu.html ouvert en file://), sinon localStorage.
+try {
+  const pistesFichier = window.__CARTE_EDITEUR__ && window.__CARTE_EDITEUR__.pistes;
+  const pistesModifiees = pistesFichier || JSON.parse(localStorage.getItem('turbo-circuit-pistes') || '{}');
+  const modif = pistesModifiees[circuitIndex];
+  if (Array.isArray(modif) && modif.length >= 3) CIRCUITS[circuitIndex].points = modif;
+} catch (e) { /* tracé par défaut */ }
 const trackPoints = CIRCUITS[circuitIndex].points.map(([x, z]) => new THREE.Vector3(x, 0, z));
 // Met à jour le titre de la page avec le nom du circuit
 document.title = 'Turbo Circuit — ' + CIRCUITS[circuitIndex].name;
@@ -201,6 +180,63 @@ function nearestOnTrack(pos) {
     if (d < bestD) { bestD = d; best = i; }
   }
   return { index: best, dist: Math.sqrt(bestD) };
+}
+
+/* ================= MONDE EN DONNÉES =================
+   Couche statique (non éditable) : piste, bords, barrière invisible.
+   Couche dynamique (éditable via editeur.html) : tous les objets placés,
+   sérialisés dans monde.json à côté du jeu (miroir monde.js pour file://).
+   Le procédural ne tourne qu'à la création : si aucune donnée n'existe,
+   on génère le monde une fois et on l'exporte. */
+const monde = { version: 1, circuit: circuitIndex, objets: [] };
+let modeData = false;
+let dataMonde = null;
+
+// Pose un objet de la bibliothèque et l'enregistre dans les données du monde
+function poser(id, x, z, rotationDeg, params, enregistrer = true) {
+  const def = library[id];
+  if (!def) return null;
+  const p = Object.assign({}, def.params, params || {});
+  const mesh = def.build(p);
+  mesh.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  mesh.position.set(x, 0, z);
+  mesh.rotation.y = (rotationDeg || 0) * Math.PI / 180;
+  scene.add(mesh);
+  if (enregistrer) monde.objets.push({ id, x, z, rotation: rotationDeg || 0, params: p });
+  return mesh;
+}
+
+// Cherche des données de monde existantes (miroir monde.js d'abord, puis localStorage)
+function mondeExistant() {
+  if (window.__MONDE__ && Array.isArray(window.__MONDE__.objets) && window.__MONDE__.objets.length) return window.__MONDE__;
+  try {
+    const m = JSON.parse(localStorage.getItem('turbo-monde') || 'null');
+    if (m && Array.isArray(m.objets) && m.objets.length) return m;
+  } catch (e) {}
+  // Rétrocompatibilité avec l'ancien format de l'éditeur
+  if (window.__CARTE_EDITEUR__ && window.__CARTE_EDITEUR__.carte && window.__CARTE_EDITEUR__.carte.objets) {
+    return { version: 1, circuit: circuitIndex, objets: window.__CARTE_EDITEUR__.carte.objets };
+  }
+  try {
+    const c = JSON.parse(localStorage.getItem('turbo-circuit-carte') || 'null');
+    if (c && Array.isArray(c.objets) && c.objets.length) return { version: 1, circuit: circuitIndex, objets: c.objets };
+  } catch (e) {}
+  return null;
+}
+
+dataMonde = mondeExistant();
+modeData = !!dataMonde;
+
+// Exporte le monde (objets) en données : localStorage + monde.json via le serveur
+function sauvegarderMonde() {
+  try { localStorage.setItem('turbo-monde', JSON.stringify(monde)); } catch (e) {}
+  try {
+    fetch('/__save-monde', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(monde)
+    }).catch(() => {});
+  } catch (e) { /* file:// : localStorage suffit */ }
 }
 
 // Route : ruban triangulé le long de la courbe
@@ -304,10 +340,8 @@ function buildWall(offset) {
   return mesh;
 }
 // Murs sur les bords (uniquement sur Le Mans — sur les autres circuits ils débordent dans les virages serrés)
-if (circuitIndex === 0) {
-  scene.add(buildWall(-ROAD_HALF - 2.8));
-  scene.add(buildWall(ROAD_HALF + 2.8));
-}
+// Murs visuels supprimés : barrière invisible anti-sortie gérée dans la physique
+// des karts (const LIMITE_INVISIBLE plus bas), à ROAD_HALF + 15 du centre de la piste.
 
 // Barrières à bandes rouges/blanches à certains endroits du circuit
 function stripedTexture() {
@@ -392,54 +426,10 @@ function buildStand(frac, sideSign, rows, seats) {
   stand.rotation.y = Math.atan2(-t.z, t.x); // face à la piste
   scene.add(stand);
 }
-// Grands gradins au départ (des deux côtés, décalés pour éviter les poteaux du portique)
-// Tribunes sur tous les circuits (plus seulement Le Mans et l'ovale)
-for (let k = 0; k < 10; k++) {
-  const frac = k / 10;
-  const i = Math.floor(frac * SAMPLES);
-  const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
-  const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-  const sideSign = k % 2 === 0 ? 1 : -1;
-  // Ne PAS mettre de tribune côté droit (sideSign=-1) dans la zone des stands (près de la ligne de départ)
-  let dStart = frac; dStart = Math.min(dStart, 1 - dStart);
-  if (sideSign === -1 && dStart < 0.12) continue; // zone pit lane à droite
-  const tx = p.x + side.x * sideSign * (ROAD_HALF + 8);
-  const tz = p.z + side.z * sideSign * (ROAD_HALF + 8);
-  if (isFarFromTrack(tx, tz, ROAD_HALF + 4)) {
-    buildStand(frac, sideSign, 4 + (k % 3), 6 + (k % 4));
-  }
-}
-
-// Tribunes supplémentaires spécifiques
-if (circuitIndex === 0) {
-  buildStand(0.015, 1, 6, 9);
-  buildStand(0.985, -1, 6, 9);
-  buildStand(0.08, 1, 4, 6);
-  buildStand(0.30, -1, 4, 6);
-  buildStand(0.50, 1, 4, 6);
-  buildStand(0.68, -1, 4, 6);
-  buildStand(0.85, 1, 4, 6);
-}
-
-// Tribunes tout autour de l'ovale (index 2) — avec vérification anti-bug
-if (circuitIndex === 2) {
-  for (let k = 0; k < 24; k++) {
-    const frac = k / 24;
-    const i = Math.floor(frac * SAMPLES);
-    const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
-    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-    const sideSign = k % 2 === 0 ? 1 : -1;
-    const tx = p.x + side.x * sideSign * (ROAD_HALF + 8);
-    const tz = p.z + side.z * sideSign * (ROAD_HALF + 8);
-    // Ne placer la tribune que si elle est bien dégagée de toute la piste
-    if (isFarFromTrack(tx, tz, ROAD_HALF + 4)) {
-      buildStand(frac, sideSign, 5, 10);
-    }
-  }
-}
+// Tribunes supprimées à la demande du joueur (plus aucune buildStand dans le monde)
 
 // Barrières sur les extérieurs des virages serrés (fractions spécifiques au Mans)
-if (circuitIndex === 0) {
+if (!modeData && circuitIndex === 0) {
   const barrierSpots = [
     [0.03, 0.16],  // virage est
     [0.28, 0.42],  // virage nord-est
@@ -447,8 +437,15 @@ if (circuitIndex === 0) {
     [0.80, 0.93]   // virage sud-ouest
   ];
   for (const [a, b] of barrierSpots) {
-    scene.add(buildBarrier(Math.floor(a * SAMPLES), Math.floor(b * SAMPLES), ROAD_HALF + 1.8));
-    scene.add(buildBarrier(Math.floor(a * SAMPLES), Math.floor(b * SAMPLES), -ROAD_HALF - 1.8));
+    for (let k = 0; k < 4; k++) {
+      const frac = a + (b - a) * (k / 3);
+      const i = Math.floor(frac * SAMPLES);
+      const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
+      const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+      const rot = Math.atan2(t.x, t.z) * 180 / Math.PI;
+      poser('barrier', p.x + side.x * (ROAD_HALF + 1.8), p.z + side.z * (ROAD_HALF + 1.8), rot, {});
+      poser('barrier', p.x - side.x * (ROAD_HALF + 1.8), p.z - side.z * (ROAD_HALF + 1.8), rot, {});
+    }
   }
 }
 
@@ -464,19 +461,15 @@ scene.add(ground);
 
 // Pads de boost
 const boostPads = [];
-const boostMat = new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x0088aa });
-[0.25, 0.55, 0.8].forEach(frac => {
-  const i = Math.floor(frac * SAMPLES);
-  const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
-  const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-  const g = new THREE.PlaneGeometry(ROAD_HALF * 2, 5);
-  const m = new THREE.Mesh(g, boostMat.clone());
-  m.rotation.x = -Math.PI / 2;
-  m.rotation.z = Math.atan2(-t.x, -t.z);
-  m.position.set(p.x, 0.05, p.z);
-  scene.add(m);
-  boostPads.push({ index: i, mesh: m, cooldown: 0 });
-});
+if (!modeData) {
+  [0.25, 0.55, 0.8].forEach(frac => {
+    const i = Math.floor(frac * SAMPLES);
+    const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
+    const rot = Math.atan2(-t.x, -t.z) * 180 / Math.PI;
+    const m = poser('boost', p.x, p.z, rot, { width: ROAD_HALF * 2, length: 5 });
+    boostPads.push({ index: i, mesh: m, cooldown: 0 });
+  });
+}
 
 // Zone de stands : boxes individuels à DROITE de la piste, près de la ligne de départ
 const pitBoxes = []; // { pos: Vector3, heading, takenBy: player|null }
@@ -550,37 +543,7 @@ const pitBoxes = []; // { pos: Vector3, heading, takenBy: player|null }
     pitBoxes.push({ pos: boxCenter.clone(), heading, takenBy: null });
   }
 
-  // --- GRAND PANNEAU "ARRÊT AU STAND" AVANT les boxes, côté droit, sans déborder sur la route ---
-  {
-    const c = document.createElement('canvas'); c.width = 1024; c.height = 128;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#d8342c'; ctx.fillRect(0, 0, 1024, 128);
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 6; ctx.strokeRect(3, 3, 1018, 122);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 72px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('ARRÊT AU STAND', 512, 68);
-    const tex = new THREE.CanvasTexture(c);
-    const bannerW = 16; // plus étroit pour ne pas dépasser sur la route
-    const banner = new THREE.Mesh(
-      new THREE.BoxGeometry(bannerW, 2, 0.4),
-      new THREE.MeshStandardMaterial({ map: tex, emissive: 0x441111, emissiveIntensity: 0.3 })
-    );
-    // Placé AVANT les boxes (frac 0.985), côté droit, bien dégagé de la route
-    const siSign = 0.985;
-    const pSign = samples[Math.floor(siSign * SAMPLES) % SAMPLES];
-    const tSign = curve.getTangentAt(siSign);
-    const sSign = new THREE.Vector3(-tSign.z, 0, tSign.x).normalize();
-    banner.position.copy(pSign).addScaledVector(sSign, -(ROAD_HALF + 8));
-    banner.position.y = 5;
-    banner.rotation.y = Math.atan2(tSign.x, tSign.z); // face à la piste
-    banner.castShadow = true;
-    scene.add(banner);
-    // poteau unique derrière le panneau
-    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 5, 8),
-      new THREE.MeshStandardMaterial({ color: 0xd8342c, roughness: 0.5 }));
-    post.position.copy(pSign).addScaledVector(sSign, -(ROAD_HALF + 9.5));
-    post.position.y = 2.5;
-    scene.add(post);
-  }
+  // --- GRAND PANNEAU "ARRÊT AU STAND" supprimé à la demande du joueur ---
 }
 
 // Caisses bonus "?" flottantes (style Mario Kart)
@@ -602,23 +565,18 @@ function questionTexture() {
   return new THREE.CanvasTexture(c);
 }
 const boxTex = questionTexture();
-[0.18, 0.45, 0.72].forEach(frac => {
-  const i = Math.floor(frac * SAMPLES);
-  const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
-  const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-  // Caisses sur la piste (style Mario Kart — elles n'ont pas de collision physique, on les traverse pour les ramasser)
-  [-ROAD_HALF * 0.5, 0, ROAD_HALF * 0.5].forEach(off => {
-    const m = new THREE.Mesh(
-      new THREE.BoxGeometry(1.8, 1.8, 1.8),
-      new THREE.MeshStandardMaterial({ map: boxTex, emissive: 0x664400 })
-    );
-    m.position.copy(p).addScaledVector(side, off);
-    m.position.y = 1.6;
-    m.castShadow = true;
-    scene.add(m);
-    itemBoxes.push({ mesh: m, taken: false, respawn: 0 });
+if (!modeData) {
+  [0.18, 0.45, 0.72].forEach(frac => {
+    const i = Math.floor(frac * SAMPLES);
+    const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
+    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+    // Caisses sur la piste (style Mario Kart — elles n'ont pas de collision physique, on les traverse pour les ramasser)
+    [-ROAD_HALF * 0.5, 0, ROAD_HALF * 0.5].forEach(off => {
+      const m = poser('itembox', p.x + side.x * off, p.z + side.z * off, 0, {});
+      if (m) { m.position.y = 1.6; itemBoxes.push({ mesh: m, taken: false, respawn: 0 }); }
+    });
   });
-});
+}
 // Carapace (projectile)
 function fireShell(p) {
   const m = new THREE.Mesh(
@@ -631,38 +589,11 @@ function fireShell(p) {
   shells.push({ mesh: m, dir: new THREE.Vector3(Math.sin(p.heading), 0, Math.cos(p.heading)), life: 4, owner: p });
 }
 
-// Portique de départ
-{
+// Portique de départ (objet data : 'arch')
+if (!modeData) {
   const p0 = samples[0], t0 = curve.getTangentAt(0);
-  const side = new THREE.Vector3(-t0.z, 0, t0.x).normalize();
-  const archMat = new THREE.MeshStandardMaterial({ color: 0xd8342c, roughness: 0.5 });
-  const gantry = new THREE.Group();
-  const postG = new THREE.CylinderGeometry(0.5, 0.5, 9, 10);
-  [-1, 1].forEach(s => {
-    const post = new THREE.Mesh(postG, archMat);
-    post.position.set(s * (ROAD_HALF + 1.2), 4.5, 0);
-    post.castShadow = true;
-    gantry.add(post);
-  });
-  const bannerTex = (() => {
-    const c = document.createElement('canvas');
-    c.width = 512; c.height = 64;
-    const x = c.getContext('2d');
-    x.fillStyle = '#d8342c'; x.fillRect(0, 0, 512, 64);
-    x.fillStyle = '#fff'; x.font = 'bold 40px Arial'; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.fillText('🏁 DÉPART 🏁', 256, 34);
-    return new THREE.CanvasTexture(c);
-  })();
-  const banner = new THREE.Mesh(
-    new THREE.BoxGeometry((ROAD_HALF + 1.2) * 2, 1.6, 0.4),
-    new THREE.MeshStandardMaterial({ map: bannerTex })
-  );
-  banner.position.set(0, 9, 0);
-  gantry.add(banner);
-  gantry.position.copy(p0);
-  // oriente l'axe X local du portique le long du bord de la route
-  gantry.rotation.y = Math.atan2(-t0.x, -t0.z);
-  scene.add(gantry);
+  poser('arch', p0.x, p0.z, Math.atan2(-t0.x, -t0.z) * 180 / Math.PI,
+    { color: '#d8342c', width: (ROAD_HALF + 1.2) * 2 });
 }
 
 // Bâtiment ACO des 24 Heures du Mans — tour de direction de course ronde (style photo)
@@ -770,8 +701,14 @@ function buildACOBuilding(frac, sideSign) {
   b.rotation.y = Math.atan2(-t.z, t.x);
   scene.add(b);
 }
-// Tour ACO juste après la ligne de départ (uniquement sur Le Mans)
-if (circuitIndex === 0) buildACOBuilding(0.05, 1);
+// Tour ACO juste après la ligne de départ (uniquement sur Le Mans) — objet data : 'aco'
+if (!modeData && circuitIndex === 0) {
+  const i = Math.floor(0.05 * SAMPLES);
+  const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
+  const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+  poser('aco', p.x + side.x * (ROAD_HALF + 25), p.z + side.z * (ROAD_HALF + 25),
+    Math.atan2(-t.z, t.x) * 180 / Math.PI, {});
+}
 
 // Long bâtiment du paddock qui longe TOUTE la ligne de départ (style bâtiment des stands du Mans)
 function pitFrontTexture() {
@@ -847,14 +784,8 @@ function buildPitBuilding(fracStart, fracEnd, offset) {
   }
   scene.add(g);
 }
-// le bâtiment s'étend sur toute la longueur de la ligne de départ (de 0.962 à 0.078, en passant par la ligne)
-if (circuitIndex === 0) buildPitBuilding(0.962, 0.078, ROAD_HALF + 25);
-
-// Tribunes principales en face de la tour ACO (côté opposé de la piste)
-if (circuitIndex === 0) {
-  buildStand(0.055, -1, 8, 14);
-  buildStand(0.105, -1, 6, 10);
-}
+// Bâtiment des stands (pit) supprimé à la demande du joueur
+// Tribunes principales supprimées à la demande du joueur
 
 // Décor : arbres et panneaux
 function addTree(x, z) {
@@ -880,26 +811,26 @@ function isFarFromTrack(x, z, minDist) {
   }
   return true;
 }
-for (let i = 0; i < SAMPLES; i += 20) {
-  const p = samples[i];
-  const t = curve.getTangentAt(i / SAMPLES);
-  const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-  const r1 = 22 + (i % 3) * 5, r2 = 22 + ((i + 7) % 3) * 5;
-  const x1 = p.x + side.x * r1, z1 = p.z + side.z * r1;
-  const x2 = p.x - side.x * r2, z2 = p.z - side.z * r2;
-  if (isFarFromTrack(x1, z1, ROAD_HALF + 6)) addTree(x1, z1);
-  if (isFarFromTrack(x2, z2, ROAD_HALF + 6)) addTree(x2, z2);
-}
-// Quelques arbres au centre (uniquement sur Le Mans, coordonnées fixes)
-if (circuitIndex === 0) {
-  [[0, 20], [40, 60], [-60, 40], [30, -30], [-30, -20]].forEach(([x, z]) => addTree(x, z));
+if (!modeData) {
+  for (let i = 0; i < SAMPLES; i += 20) {
+    const p = samples[i];
+    const t = curve.getTangentAt(i / SAMPLES);
+    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+    const r1 = 22 + (i % 3) * 5, r2 = 22 + ((i + 7) % 3) * 5;
+    const x1 = p.x + side.x * r1, z1 = p.z + side.z * r1;
+    const x2 = p.x - side.x * r2, z2 = p.z - side.z * r2;
+    if (isFarFromTrack(x1, z1, ROAD_HALF + 6)) poser('tree', x1, z1, Math.random() * 360, {});
+    if (isFarFromTrack(x2, z2, ROAD_HALF + 6)) poser('tree', x2, z2, Math.random() * 360, {});
+  }
+  // Quelques arbres au centre (uniquement sur Le Mans, coordonnées fixes)
+  if (circuitIndex === 0) {
+    [[0, 20], [40, 60], [-60, 40], [30, -30], [-30, -20]].forEach(([x, z]) => poser('tree', x, z, 0, {}));
+  }
 }
 
 // Buissons et fleurs colorées
-{
-  const bushMat = new THREE.MeshStandardMaterial({ color: 0x388e3c, roughness: 1, flatShading: true });
-  const flowerMats = [0xff6f91, 0xffd54f, 0xba68c8, 0xffffff].map(c =>
-    new THREE.MeshStandardMaterial({ color: c, roughness: 0.8 }));
+if (!modeData) {
+  const flowerColors = ['#ff6f91', '#ffd54f', '#ba68c8', '#ffffff'];
   for (let i = 0; i < SAMPLES; i += 7) {
     const p = samples[i];
     const t = curve.getTangentAt(i / SAMPLES);
@@ -908,20 +839,35 @@ if (circuitIndex === 0) {
     const s = i % 2 ? 1 : -1;
     const bx = p.x + side.x * r * s, bz = p.z + side.z * r * s;
     if (isFarFromTrack(bx, bz, ROAD_HALF + 5)) {
-      const b = new THREE.Mesh(new THREE.SphereGeometry(1 + (i % 3) * 0.4, 6, 5), bushMat);
-      b.position.set(bx, 0.6, bz);
-      b.scale.y = 0.7;
-      scene.add(b);
+      poser('bush', bx, bz, Math.random() * 360, { color: '#388e3c', scale: 1 + (i % 3) * 0.4 });
       if (i % 14 === 0) {
         const fx = p.x - side.x * (r + 1.5) * s, fz = p.z - side.z * (r + 1.5) * s;
         if (isFarFromTrack(fx, fz, ROAD_HALF + 2)) {
-          const f = new THREE.Mesh(new THREE.SphereGeometry(0.35, 6, 5), flowerMats[i % 4]);
-          f.position.set(fx, 0.35, fz);
-          scene.add(f);
+          poser('flower', fx, fz, 0, { color: flowerColors[i % 4], scale: 1 });
         }
       }
     }
   }
+}
+
+/* ---------- Monde chargé depuis les données (monde.json / éditeur de carte) ----------
+   Si des données existent, elles remplacent TOUT le décor procédural :
+   seuls les objets de la data sont instanciés (plus les éléments de gameplay
+   enregistrés ci-dessous : caisses et pads de boost). */
+if (modeData) {
+  let places = 0;
+  dataMonde.objets.forEach(o => {
+    const mesh = poser(o.id, +o.x || 0, +o.z || 0, +o.rotation || 0, o.params || {}, false);
+    if (!mesh) return;
+    if (o.id === 'itembox') { mesh.position.y = 1.6; itemBoxes.push({ mesh, taken: false, respawn: 0 }); }
+    if (o.id === 'boost') boostPads.push({ index: 0, mesh, cooldown: 0 });
+    places++;
+  });
+  console.log('Monde chargé depuis les données :', places, 'objet(s)');
+} else {
+  // Première génération : le monde procédural devient de la data exportée
+  sauvegarderMonde();
+  console.log('Monde généré procéduralement et exporté :', monde.objets.length, 'objet(s)');
 }
 
 /* ============================= KARTS ============================= */
@@ -1314,7 +1260,13 @@ function updatePlayer(p, dt) {
     p.inPitLane = true;
   } else {
     p.inPitLane = false;
-    if (near.dist > ROAD_HALF + 1.2) {
+    // Barrière invisible anti-sortie (aucun mur visible) : limite dure à ROAD_HALF + 15
+    const LIMITE_INVISIBLE = ROAD_HALF + 15;
+    if (near.dist > LIMITE_INVISIBLE) {
+      const dir = nearP.clone().sub(p.pos).setY(0).normalize();
+      p.pos.copy(nearP).addScaledVector(dir, LIMITE_INVISIBLE);
+      p.speed *= 0.6;
+    } else if (near.dist > ROAD_HALF + 1.2) {
       const dir = nearP.clone().sub(p.pos).setY(0).normalize();
       p.pos.addScaledVector(dir, (near.dist - (ROAD_HALF + 1.2)) * 0.5);
       p.speed *= 0.92;
@@ -1561,6 +1513,21 @@ CIRCUITS.forEach((c, i) => {
   circuitBtnsEl.appendChild(btn);
 });
 
+// "Nouveau monde" : efface les données de monde → au rechargement, le jeu régénère
+// le monde procédural une fois et l'exporte (monde.json + monde.js)
+document.getElementById('btn-nouveau-monde').addEventListener('click', () => {
+  if (!confirm('Régénérer un nouveau monde ? Le monde actuel (monde.json) sera remplacé.')) return;
+  localStorage.removeItem('turbo-monde');
+  localStorage.removeItem('turbo-circuit-carte');
+  localStorage.removeItem('turbo-circuit-pistes');
+  // remet le miroir monde.js à vide via le serveur (sinon file:// garderait l'ancien)
+  fetch('/__save-monde', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ version: 1, circuit: circuitIndex, objets: [] })
+  }).catch(() => {}).finally(() => setTimeout(() => location.reload(), 300));
+});
+
 function startRace(level) {
   botLevel = level;
   menuEl.classList.add('hidden');
@@ -1748,6 +1715,8 @@ function animate() {
     : raceState === 'qualif'
       ? (p.qualifTime !== null ? `⏱️ qualif ${p.qualifTime.toFixed(1)}s ✓` : raceState === 'qualif' ? `⏱️ qualif — ${qualifClock.toFixed(1)}s` : '⏱️ en attente…')
       : `Tour ${p.lap}/${TOTAL_LAPS} — ${Math.abs(p.speed * 3.6).toFixed(0)} km/h — 🛞 ${Math.round(p.tires)}%`
+        + (p.inPitLane && !p.inPit ? ' — 🅿️ STANDS : ralentis dans un box !' : '')
+        + (p.inPit ? ' — 🔧 Changement de pneus…' : '')
         + (p.inPit ? ` 🔧 PIT ${Math.ceil(7 - p.pitTimer)}s` : '') + (p.bestLap !== null ? ` — ⏱️ record ${p.bestLap.toFixed(1)}s` : '');
   hud1.textContent = `${CIRCUITS[circuitIndex].name} — 🔴 J1 — ${fmt(p1)}${p1.item ? '  ' + p1.item.icon : ''}${p1.star > 0 ? ' ✨' : ''}`;
   hud2.textContent = `🔵 J2 — ${fmt(p2)}${p2.item ? '  ' + p2.item.icon : ''}${p2.star > 0 ? ' ✨' : ''}`;

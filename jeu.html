@@ -35,6 +35,8 @@
   .menu-btns button:hover { transform: scale(1.06); background: rgba(30, 136, 229, 1); }
   #menu.hidden { display: none; }
 </style>
+<script src="./monde.js"></script>
+<script src="./carte-editeur.js"></script>
 
 <script>
   // Affiche les erreurs à l'écran pour diagnostiquer
@@ -66,6 +68,7 @@
     <button data-level="2">🤖 Niveau 2 — Difficile</button>
   </div>
   <p>(touches 1-4 = circuit • F = facile • D = difficile)</p>
+  <p><button id="btn-nouveau-monde" style="font-size:14px;padding:8px 16px;cursor:pointer;">🔄 Nouveau monde (régénérer le décor procédural)</button></p>
 </div>
 
 <script type="module">/**
@@ -53112,6 +53115,567 @@ if ( typeof window !== 'undefined' ) {
 }
 
 const THREE = { ACESFilmicToneMapping, AddEquation, AddOperation, AdditiveAnimationBlendMode, AdditiveBlending, AgXToneMapping, AlphaFormat, AlwaysCompare, AlwaysDepth, AlwaysStencilFunc, AmbientLight, AnimationAction, AnimationClip, AnimationLoader, AnimationMixer, AnimationObjectGroup, AnimationUtils, ArcCurve, ArrayCamera, ArrowHelper, AttachedBindMode, Audio, AudioAnalyser, AudioContext, AudioListener, AudioLoader, AxesHelper, BackSide, BasicDepthPacking, BasicShadowMap, BatchedMesh, Bone, BooleanKeyframeTrack, Box2, Box3, Box3Helper, BoxGeometry, BoxHelper, BufferAttribute, BufferGeometry, BufferGeometryLoader, ByteType, Cache, Camera, CameraHelper, CanvasTexture, CapsuleGeometry, CatmullRomCurve3, CineonToneMapping, CircleGeometry, ClampToEdgeWrapping, Clock, Color, ColorKeyframeTrack, ColorManagement, CompressedArrayTexture, CompressedCubeTexture, CompressedTexture, CompressedTextureLoader, ConeGeometry, ConstantAlphaFactor, ConstantColorFactor, CubeCamera, CubeReflectionMapping, CubeRefractionMapping, CubeTexture, CubeTextureLoader, CubeUVReflectionMapping, CubicBezierCurve, CubicBezierCurve3, CubicInterpolant, CullFaceBack, CullFaceFront, CullFaceFrontBack, CullFaceNone, Curve, CurvePath, CustomBlending, CustomToneMapping, CylinderGeometry, Cylindrical, Data3DTexture, DataArrayTexture, DataTexture, DataTextureLoader, DataUtils, DecrementStencilOp, DecrementWrapStencilOp, DefaultLoadingManager, DepthFormat, DepthStencilFormat, DepthTexture, DetachedBindMode, DirectionalLight, DirectionalLightHelper, DiscreteInterpolant, DisplayP3ColorSpace, DodecahedronGeometry, DoubleSide, DstAlphaFactor, DstColorFactor, DynamicCopyUsage, DynamicDrawUsage, DynamicReadUsage, EdgesGeometry, EllipseCurve, EqualCompare, EqualDepth, EqualStencilFunc, EquirectangularReflectionMapping, EquirectangularRefractionMapping, Euler, EventDispatcher, ExtrudeGeometry, FileLoader, Float16BufferAttribute, Float32BufferAttribute, Float64BufferAttribute, FloatType, Fog, FogExp2, FramebufferTexture, FrontSide, Frustum, GLBufferAttribute, GLSL1, GLSL3, GreaterCompare, GreaterDepth, GreaterEqualCompare, GreaterEqualDepth, GreaterEqualStencilFunc, GreaterStencilFunc, GridHelper, Group, HalfFloatType, HemisphereLight, HemisphereLightHelper, IcosahedronGeometry, ImageBitmapLoader, ImageLoader, ImageUtils, IncrementStencilOp, IncrementWrapStencilOp, InstancedBufferAttribute, InstancedBufferGeometry, InstancedInterleavedBuffer, InstancedMesh, Int16BufferAttribute, Int32BufferAttribute, Int8BufferAttribute, IntType, InterleavedBuffer, InterleavedBufferAttribute, Interpolant, InterpolateDiscrete, InterpolateLinear, InterpolateSmooth, InvertStencilOp, KeepStencilOp, KeyframeTrack, LOD, LatheGeometry, Layers, LessCompare, LessDepth, LessEqualCompare, LessEqualDepth, LessEqualStencilFunc, LessStencilFunc, Light, LightProbe, Line, Line3, LineBasicMaterial, LineCurve, LineCurve3, LineDashedMaterial, LineLoop, LineSegments, LinearDisplayP3ColorSpace, LinearEncoding, LinearFilter, LinearInterpolant, LinearMipMapLinearFilter, LinearMipMapNearestFilter, LinearMipmapLinearFilter, LinearMipmapNearestFilter, LinearSRGBColorSpace, LinearToneMapping, LinearTransfer, Loader, LoaderUtils, LoadingManager, LoopOnce, LoopPingPong, LoopRepeat, LuminanceAlphaFormat, LuminanceFormat, MOUSE, Material, MaterialLoader, MathUtils, Matrix3, Matrix4, MaxEquation, Mesh, MeshBasicMaterial, MeshDepthMaterial, MeshDistanceMaterial, MeshLambertMaterial, MeshMatcapMaterial, MeshNormalMaterial, MeshPhongMaterial, MeshPhysicalMaterial, MeshStandardMaterial, MeshToonMaterial, MinEquation, MirroredRepeatWrapping, MixOperation, MultiplyBlending, MultiplyOperation, NearestFilter, NearestMipMapLinearFilter, NearestMipMapNearestFilter, NearestMipmapLinearFilter, NearestMipmapNearestFilter, NeverCompare, NeverDepth, NeverStencilFunc, NoBlending, NoColorSpace, NoToneMapping, NormalAnimationBlendMode, NormalBlending, NotEqualCompare, NotEqualDepth, NotEqualStencilFunc, NumberKeyframeTrack, Object3D, ObjectLoader, ObjectSpaceNormalMap, OctahedronGeometry, OneFactor, OneMinusConstantAlphaFactor, OneMinusConstantColorFactor, OneMinusDstAlphaFactor, OneMinusDstColorFactor, OneMinusSrcAlphaFactor, OneMinusSrcColorFactor, OrthographicCamera, P3Primaries, PCFShadowMap, PCFSoftShadowMap, PMREMGenerator, Path, PerspectiveCamera, Plane, PlaneGeometry, PlaneHelper, PointLight, PointLightHelper, Points, PointsMaterial, PolarGridHelper, PolyhedronGeometry, PositionalAudio, PropertyBinding, PropertyMixer, QuadraticBezierCurve, QuadraticBezierCurve3, Quaternion, QuaternionKeyframeTrack, QuaternionLinearInterpolant, RED_GREEN_RGTC2_Format, RED_RGTC1_Format, REVISION, RGBADepthPacking, RGBAFormat, RGBAIntegerFormat, RGBA_ASTC_10x10_Format, RGBA_ASTC_10x5_Format, RGBA_ASTC_10x6_Format, RGBA_ASTC_10x8_Format, RGBA_ASTC_12x10_Format, RGBA_ASTC_12x12_Format, RGBA_ASTC_4x4_Format, RGBA_ASTC_5x4_Format, RGBA_ASTC_5x5_Format, RGBA_ASTC_6x5_Format, RGBA_ASTC_6x6_Format, RGBA_ASTC_8x5_Format, RGBA_ASTC_8x6_Format, RGBA_ASTC_8x8_Format, RGBA_BPTC_Format, RGBA_ETC2_EAC_Format, RGBA_PVRTC_2BPPV1_Format, RGBA_PVRTC_4BPPV1_Format, RGBA_S3TC_DXT1_Format, RGBA_S3TC_DXT3_Format, RGBA_S3TC_DXT5_Format, RGB_BPTC_SIGNED_Format, RGB_BPTC_UNSIGNED_Format, RGB_ETC1_Format, RGB_ETC2_Format, RGB_PVRTC_2BPPV1_Format, RGB_PVRTC_4BPPV1_Format, RGB_S3TC_DXT1_Format, RGFormat, RGIntegerFormat, RawShaderMaterial, Ray, Raycaster, Rec709Primaries, RectAreaLight, RedFormat, RedIntegerFormat, ReinhardToneMapping, RenderTarget, RepeatWrapping, ReplaceStencilOp, ReverseSubtractEquation, RingGeometry, SIGNED_RED_GREEN_RGTC2_Format, SIGNED_RED_RGTC1_Format, SRGBColorSpace, SRGBTransfer, Scene, ShaderChunk, ShaderLib, ShaderMaterial, ShadowMaterial, Shape, ShapeGeometry, ShapePath, ShapeUtils, ShortType, Skeleton, SkeletonHelper, SkinnedMesh, Source, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SplineCurve, SpotLight, SpotLightHelper, Sprite, SpriteMaterial, SrcAlphaFactor, SrcAlphaSaturateFactor, SrcColorFactor, StaticCopyUsage, StaticDrawUsage, StaticReadUsage, StereoCamera, StreamCopyUsage, StreamDrawUsage, StreamReadUsage, StringKeyframeTrack, SubtractEquation, SubtractiveBlending, TOUCH, TangentSpaceNormalMap, TetrahedronGeometry, Texture, TextureLoader, TorusGeometry, TorusKnotGeometry, Triangle, TriangleFanDrawMode, TriangleStripDrawMode, TrianglesDrawMode, TubeGeometry, TwoPassDoubleSide, UVMapping, Uint16BufferAttribute, Uint32BufferAttribute, Uint8BufferAttribute, Uint8ClampedBufferAttribute, Uniform, UniformsGroup, UniformsLib, UniformsUtils, UnsignedByteType, UnsignedInt248Type, UnsignedIntType, UnsignedShort4444Type, UnsignedShort5551Type, UnsignedShortType, VSMShadowMap, Vector2, Vector3, Vector4, VectorKeyframeTrack, VideoTexture, WebGL1Renderer, WebGL3DRenderTarget, WebGLArrayRenderTarget, WebGLCoordinateSystem, WebGLCubeRenderTarget, WebGLMultipleRenderTargets, WebGLRenderTarget, WebGLRenderer, WebGLUtils, WebGPUCoordinateSystem, WireframeGeometry, WrapAroundEnding, ZeroCurvatureEnding, ZeroFactor, ZeroSlopeEnding, ZeroStencilOp, _SRGBAFormat, createCanvasElement, sRGBEncoding };
+// Catalogue d'objets 3D partagé entre bibliotheque.html et editeur.html
+// (source unique : ne pas dupliquer dans les pages)
+// L'importmap des pages mappe 'three' -> ./three.module.js, y compris pour ce module.
+
+
+const library = {
+  kart: {
+    icon: '🏎️', name: 'Kart de course',
+    params: { color: '#e53935', scale: 1 },
+    build: p => {
+      const g = new THREE.Group();
+      const bodyMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.35, metalness: 0.4 });
+      const darkMat = new THREE.MeshStandardMaterial({ color: 0x1c1c22, roughness: 0.6 });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(2, 0.7, 3.4), bodyMat);
+      body.position.y = 0.6;
+      const nose = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.45, 0.9), bodyMat);
+      nose.position.set(0, 0.45, 2);
+      const bumper = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.3, 0.3), darkMat);
+      bumper.position.set(0, 0.35, 2.4);
+      const spoiler = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.15, 0.6), bodyMat);
+      spoiler.position.set(0, 1.35, -1.75);
+      const strutG = new THREE.BoxGeometry(0.15, 0.5, 0.15);
+      [-0.7, 0.7].forEach(x => { const s = new THREE.Mesh(strutG, darkMat); s.position.set(x, 1.05, -1.7); g.add(s); });
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.5, 0.4), darkMat);
+      seat.position.set(0, 0.95, -0.7);
+      const driver = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 10), new THREE.MeshStandardMaterial({ color: 0xffd9b3 }));
+      driver.position.set(0, 1.4, -0.2);
+      const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.58, 12, 10, 0, Math.PI * 2, 0, Math.PI / 2),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.25, metalness: 0.3 }));
+      helmet.position.set(0, 1.47, -0.2);
+      const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff8c9, emissive: 0xffee88, emissiveIntensity: 1.2 });
+      [-0.6, 0.6].forEach(x => { const hl = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 6), lightMat); hl.position.set(x, 0.6, 2.42); g.add(hl); });
+      const tailMat = new THREE.MeshStandardMaterial({ color: 0xff2222, emissive: 0xaa0000, emissiveIntensity: 0.8 });
+      [-0.6, 0.6].forEach(x => { const tl = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.18, 0.1), tailMat); tl.position.set(x, 0.65, -1.72); g.add(tl); });
+      g.add(body, nose, bumper, spoiler, seat, driver, helmet);
+      const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
+      const hubMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8, roughness: 0.3 });
+      [[-1, 1.1], [1, 1.1], [-1, -1.1], [1, -1.1]].forEach(([x, z]) => {
+        const w = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.4, 12), wheelMat);
+        w.rotation.z = Math.PI / 2; w.position.set(x, 0.45, z); g.add(w);
+        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.42, 8), hubMat);
+        hub.rotation.z = Math.PI / 2; hub.position.copy(w.position); g.add(hub);
+      });
+      g.scale.setScalar(p.scale);
+      return g;
+    }
+  },
+  tree: {
+    icon: '🌲', name: 'Arbre (pin)',
+    params: { trunkColor: '#7a4a21', leafColor: '#2e7d32', scale: 1 },
+    build: p => {
+      const g = new THREE.Group();
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 3, 6), new THREE.MeshStandardMaterial({ color: new THREE.Color(p.trunkColor) }));
+      trunk.position.y = 1.5;
+      const leaves = new THREE.Mesh(new THREE.ConeGeometry(2.4, 5, 8), new THREE.MeshStandardMaterial({ color: new THREE.Color(p.leafColor) }));
+      leaves.position.y = 5;
+      g.add(trunk, leaves); g.scale.setScalar(p.scale);
+      return g;
+    }
+  },
+  bush: {
+    icon: '🌿', name: 'Buisson',
+    params: { color: '#388e3c', scale: 1 },
+    build: p => {
+      const b = new THREE.Mesh(new THREE.SphereGeometry(1.5, 8, 6),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 1, flatShading: true }));
+      b.scale.y = 0.7; b.position.y = 0.8; b.scale.x *= p.scale; b.scale.z *= p.scale;
+      return b;
+    }
+  },
+  flower: {
+    icon: '🌸', name: 'Fleur',
+    params: { color: '#ff6f91', scale: 1 },
+    build: p => {
+      const g = new THREE.Group();
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.5, 6), new THREE.MeshStandardMaterial({ color: 0x2e7d32 }));
+      stem.position.y = 0.25;
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.8 }));
+      head.position.y = 0.55;
+      g.add(stem, head); g.scale.setScalar(p.scale);
+      return g;
+    }
+  },
+  barrier: {
+    icon: '🚧', name: 'Barrière',
+    params: { scale: 1 },
+    build: p => {
+      const g = new THREE.Group();
+      const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 });
+      const stripeMat = new THREE.MeshStandardMaterial({ color: 0xd8342c, roughness: 0.7 });
+      for (let i = 0; i < 4; i++) {
+        const seg = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.15), i % 2 ? stripeMat : mat);
+        seg.position.set(i * 1.2 - 1.8, 0.4, 0); g.add(seg);
+      }
+      [-1.8, 1.8].forEach(x => {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.8, 6), new THREE.MeshStandardMaterial({ color: 0x555555 }));
+        post.position.set(x, 0.4, -0.15); g.add(post);
+      });
+      g.scale.setScalar(p.scale);
+      return g;
+    }
+  },
+  itembox: {
+    icon: '❓', name: 'Boîte objet',
+    params: { scale: 1 },
+    build: p => {
+      const c = document.createElement('canvas'); c.width = c.height = 128;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffb300'; ctx.fillRect(0, 0, 128, 128);
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; ctx.strokeRect(4, 4, 120, 120);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 80px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('?', 64, 70);
+      const tex = new THREE.CanvasTexture(c);
+      const m = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.8, 1.8),
+        new THREE.MeshStandardMaterial({ map: tex, emissive: 0x664400 }));
+      m.position.y = 0.9; m.scale.setScalar(p.scale);
+      return m;
+    }
+  },
+  boost: {
+    icon: '⚡', name: 'Zone de boost',
+    params: { width: 8, length: 5 },
+    build: p => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(p.width, p.length),
+        new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x0088aa, transparent: true, opacity: 0.7 }));
+      m.rotation.x = -Math.PI / 2; m.position.y = 0.05;
+      return m;
+    }
+  },
+  arch: {
+    icon: '🎪', name: 'Arche de départ',
+    params: { color: '#d8342c', width: 12 },
+    build: p => {
+      const g = new THREE.Group();
+      const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.5 });
+      const postG = new THREE.CylinderGeometry(0.5, 0.5, 9, 10);
+      [-1, 1].forEach(s => { const post = new THREE.Mesh(postG, mat); post.position.set(s * (p.width / 2), 4.5, 0); g.add(post); });
+      const banner = new THREE.Mesh(new THREE.BoxGeometry(p.width + 1.2, 1.6, 0.4), mat);
+      banner.position.y = 8.5; g.add(banner);
+      return g;
+    }
+  },
+  wall: {
+    icon: '🧱', name: 'Mur de sécurité',
+    params: { color: '#e8e8e8', height: 3, length: 10, scale: 1 },
+    build: p => {
+      const g = new THREE.Mesh(
+        new THREE.BoxGeometry(p.length, p.height, 0.5),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.9 })
+      );
+      g.position.y = p.height / 2;
+      g.scale.setScalar(p.scale);
+      return g;
+    }
+  },
+  sign: {
+    icon: '🪧', name: 'Panneau publicitaire',
+    params: { text: '24 HEURES DU MANS', bg: '#b3121f', fg: '#ffffff', width: 11, scale: 1 },
+    build: p => {
+      const g = new THREE.Group();
+      const c = document.createElement('canvas'); c.width = 512; c.height = 96;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = p.bg; ctx.fillRect(0, 0, 512, 96);
+      ctx.fillStyle = p.fg; ctx.font = 'bold 42px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(p.text, 256, 52);
+      const tex = new THREE.CanvasTexture(c);
+      const panel = new THREE.Mesh(
+        new THREE.PlaneGeometry(p.width, 2),
+        new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, side: THREE.DoubleSide })
+      );
+      panel.position.y = 5.6;
+      const postG = new THREE.CylinderGeometry(0.15, 0.15, 5.6, 8);
+      const postMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
+      [-p.width/2 + 0.5, p.width/2 - 0.5].forEach(x => {
+        const post = new THREE.Mesh(postG, postMat);
+        post.position.set(x, 2.8, -0.2); g.add(post);
+      });
+      g.add(panel);
+      g.scale.setScalar(p.scale);
+      return g;
+    }
+  },
+  pitbox: {
+    icon: '🅿️', name: 'Box de stand',
+    params: { color: '#555555', lineColor: '#ffffff', width: 4, length: 5 },
+    build: p => {
+      const g = new THREE.Group();
+      const box = new THREE.Mesh(
+        new THREE.PlaneGeometry(p.width, p.length),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.8 })
+      );
+      box.rotation.x = -Math.PI / 2; box.position.y = 0.05;
+      g.add(box);
+      const lineMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.lineColor), roughness: 0.5 });
+      const mkLine = (w, l, x, z) => {
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(w, l), lineMat);
+        m.rotation.x = -Math.PI / 2; m.position.set(x, 0.06, z); g.add(m);
+      };
+      mkLine(p.width + 0.2, 0.2, 0, -p.length/2);
+      mkLine(p.width + 0.2, 0.2, 0, p.length/2);
+      mkLine(0.2, p.length + 0.2, -p.width/2, 0);
+      mkLine(0.2, p.length + 0.2, p.width/2, 0);
+      // texte P
+      const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = p.color; ctx.fillRect(0, 0, 128, 128);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 90px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('P', 64, 70);
+      const label = new THREE.Mesh(new THREE.PlaneGeometry(2, 2),
+        new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(c), roughness: 0.9 }));
+      label.rotation.x = -Math.PI / 2; label.position.y = 0.07;
+      g.add(label);
+      return g;
+    }
+  },
+  pitsign: {
+    icon: '🚩', name: 'Panneau Arrêt au stand',
+    params: { text: 'ARRÊT AU STAND', bg: '#d8342c', fg: '#ffffff', width: 16, scale: 1 },
+    build: p => {
+      const g = new THREE.Group();
+      const c = document.createElement('canvas'); c.width = 1024; c.height = 128;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = p.bg; ctx.fillRect(0, 0, 1024, 128);
+      ctx.strokeStyle = p.fg; ctx.lineWidth = 6; ctx.strokeRect(3, 3, 1018, 122);
+      ctx.fillStyle = p.fg; ctx.font = 'bold 72px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(p.text, 512, 68);
+      const tex = new THREE.CanvasTexture(c);
+      const banner = new THREE.Mesh(
+        new THREE.BoxGeometry(p.width, 2, 0.4),
+        new THREE.MeshStandardMaterial({ map: tex, emissive: 0x441111, emissiveIntensity: 0.3 })
+      );
+      banner.position.y = 5; g.add(banner);
+      const post = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25, 0.25, 5, 8),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.bg), roughness: 0.5 })
+      );
+      post.position.set(0, 2.5, -1.5); g.add(post);
+      g.scale.setScalar(p.scale);
+      return g;
+    }
+  },
+  shell: {
+    icon: '🐢', name: 'Carapace',
+    params: { color: '#2e7d32', scale: 1 },
+    build: p => {
+      const m = new THREE.Mesh(
+        new THREE.SphereGeometry(0.7, 10, 8),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.4 })
+      );
+      m.position.y = 0.8; m.scale.setScalar(p.scale);
+      return m;
+    }
+  },
+  mushroom: {
+    icon: '🍄', name: 'Champignon',
+    params: { capColor: '#e53935', stemColor: '#fff8e1', scale: 1 },
+    build: p => {
+      const g = new THREE.Group();
+      const stem = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25, 0.35, 0.6, 8),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.stemColor), roughness: 0.7 })
+      );
+      stem.position.y = 0.3;
+      const cap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.55, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.capColor), roughness: 0.4 })
+      );
+      cap.position.y = 0.55;
+      g.add(stem, cap); g.scale.setScalar(p.scale);
+      return g;
+    }
+  },
+  star: {
+    icon: '⭐', name: 'Étoile',
+    params: { color: '#ffd700', scale: 1 },
+    build: p => {
+      const shape = new THREE.Shape();
+      const spikes = 5, outer = 0.8, inner = 0.35;
+      for (let i = 0; i < spikes * 2; i++) {
+        const r = i % 2 === 0 ? outer : inner;
+        const a = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
+        const x = Math.cos(a) * r, y = Math.sin(a) * r;
+        i === 0 ? shape.moveTo(x, y) : shape.lineTo(x, y);
+      }
+      shape.closePath();
+      const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.15, bevelEnabled: false });
+      const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+        color: new THREE.Color(p.color), emissive: new THREE.Color(p.color), emissiveIntensity: 0.5, roughness: 0.3
+      }));
+      m.position.y = 0.8; m.scale.setScalar(p.scale);
+      return m;
+    }
+  },
+  mechanic: {
+    icon: '👨‍🔧', name: 'Mécanicien',
+    params: { color: '#ff6f00', skinColor: '#ffd9b3', scale: 1 },
+    build: p => {
+      const g = new THREE.Group();
+      const body = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.22, 0.26, 0.7, 6),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.7 })
+      );
+      body.position.y = 0.55;
+      const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.18, 8, 6),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.skinColor), roughness: 0.7 })
+      );
+      head.position.y = 1.1;
+      const cap = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.2, 0.2, 0.08, 8),
+        new THREE.MeshStandardMaterial({ color: 0x222222 })
+      );
+      cap.position.y = 1.24;
+      const armL = new THREE.Mesh(
+        new THREE.BoxGeometry(0.1, 0.5, 0.1),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.7 })
+      );
+      armL.position.set(-0.32, 0.65, 0); armL.rotation.z = 0.6;
+      const armR = armL.clone(); armR.position.x = 0.32; armR.rotation.z = -0.6;
+      g.add(body, head, cap, armL, armR);
+      g.scale.setScalar(p.scale);
+      return g;
+    }
+  },
+  pit: {
+    icon: '🏗️', name: 'Bâtiment des stands',
+    params: { color: '#90a4ae', roofColor: '#37474f', length: 30, scale: 1 },
+    build: p => {
+      const g = new THREE.Group();
+      const bodyMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.8 });
+      const roofMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.roofColor), roughness: 0.6 });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(p.length, 7, 10), bodyMat);
+      body.position.y = 3.5; g.add(body);
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(p.length + 0.5, 0.4, 10.8), roofMat);
+      roof.position.y = 7.2; g.add(roof);
+      // portes de stand
+      for (let i = 0; i < 6; i++) {
+        const door = new THREE.Mesh(
+          new THREE.BoxGeometry(3, 4, 0.2),
+          new THREE.MeshStandardMaterial({ color: 0x455a64, roughness: 0.5 })
+        );
+        door.position.set(-p.length/2 + 3 + i * (p.length - 6) / 5, 2, -5.1);
+        g.add(door);
+      }
+      g.scale.setScalar(p.scale);
+      return g;
+    }
+  },
+  cloud: {
+    icon: '☁️', name: 'Nuage',
+    params: { scale: 1 },
+    build: p => {
+      const g = new THREE.Group();
+      const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true });
+      for (let j = 0; j < 4; j++) {
+        const s = new THREE.Mesh(new THREE.SphereGeometry(3 + j * 1.5, 7, 6), mat);
+        s.position.set(j * 4 - 6, j * 0.4, j * 0.5);
+        g.add(s);
+      }
+      g.scale.setScalar(p.scale); g.position.y = 5;
+      return g;
+    }
+  },
+  mountain: {
+    icon: '⛰️', name: 'Montagne',
+    params: { color: '#7d9b76', height: 30, scale: 1 },
+    build: p => {
+      const m = new THREE.Mesh(new THREE.ConeGeometry(20 * p.scale, p.height, 5),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 1, flatShading: true }));
+      m.position.y = p.height / 2;
+      return m;
+    }
+  },
+  stand: {
+    icon: '👥', name: 'Tribune',
+    params: { color: '#9e9e9e', rows: 5, scale: 1 },
+    build: p => {
+      const g = new THREE.Group();
+      const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.color), roughness: 0.9 });
+      for (let r = 0; r < p.rows; r++) {
+        const step = new THREE.Mesh(new THREE.BoxGeometry(8, 0.5, 1.3), mat);
+        step.position.set(0, 0.25 + r * 0.5, -r * 1.3); g.add(step);
+      }
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.25, p.rows * 1.1 + 1.6),
+        new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.6 }));
+      roof.position.set(0, 0.5 + p.rows * 0.5, -p.rows * 0.65); g.add(roof);
+      g.scale.setScalar(p.scale);
+      return g;
+    }
+  },
+  aco: {
+    icon: '🏢', name: 'Tour ACO',
+    params: { scale: 1 },
+    build: p => {
+      // textures procédurales (identiques à celles du jeu)
+      const acoGlassTexture = () => {
+        const c = document.createElement('canvas');
+        c.width = 512; c.height = 256;
+        const x = c.getContext('2d');
+        const grad = x.createLinearGradient(0, 0, 0, 256);
+        grad.addColorStop(0, '#a8cbe9'); grad.addColorStop(0.55, '#5d87b8'); grad.addColorStop(1, '#33547e');
+        x.fillStyle = grad; x.fillRect(0, 0, 512, 256);
+        x.fillStyle = 'rgba(245,245,245,0.9)';
+        for (let col = 0; col <= 16; col++) x.fillRect(col * 32 - 2, 0, 4, 256);
+        x.fillRect(0, 124, 512, 5);
+        x.fillStyle = 'rgba(255,255,255,0.20)';
+        for (let i = 0; i < 5; i++) x.fillRect(i * 110 + 18, 8, 30, 240);
+        const t = new THREE.CanvasTexture(c);
+        t.wrapS = THREE.RepeatWrapping; t.repeat.set(3, 1);
+        return t;
+      };
+      const acoBannerTexture = (text, bg, fg) => {
+        const c = document.createElement('canvas');
+        c.width = 1024; c.height = 64;
+        const x = c.getContext('2d');
+        x.fillStyle = bg; x.fillRect(0, 0, 1024, 64);
+        x.fillStyle = fg; x.font = 'bold 36px Arial';
+        x.textAlign = 'center'; x.textBaseline = 'middle';
+        x.fillText(text, 512, 34);
+        const t = new THREE.CanvasTexture(c);
+        t.wrapS = THREE.RepeatWrapping; t.repeat.set(2, 1);
+        return t;
+      };
+      const acoAnnexTexture = () => {
+        const c = document.createElement('canvas');
+        c.width = 256; c.height = 128;
+        const x = c.getContext('2d');
+        x.fillStyle = '#f2f0ea'; x.fillRect(0, 0, 256, 128);
+        x.fillStyle = '#2c4a6e';
+        for (let r = 0; r < 2; r++)
+          for (let col = 0; col < 6; col++)
+            x.fillRect(14 + col * 40, 16 + r * 52, 28, 36);
+        return new THREE.CanvasTexture(c);
+      };
+
+      const R = 7; // rayon de la tour
+      const glassMat = new THREE.MeshStandardMaterial({ map: acoGlassTexture(), roughness: 0.25, metalness: 0.35 });
+      const whiteMat = new THREE.MeshStandardMaterial({ color: 0xe8e6e0, roughness: 0.75 });
+      const darkMat = new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.55 });
+      const b = new THREE.Group();
+
+      // socle / rez-de-chaussée
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 3, 28), whiteMat);
+      base.position.y = 1.5; base.castShadow = true; base.receiveShadow = true;
+      b.add(base);
+      const door = new THREE.Mesh(
+        new THREE.PlaneGeometry(4, 2.6),
+        new THREE.MeshStandardMaterial({ color: 0x16324f, roughness: 0.2, metalness: 0.6 })
+      );
+      door.position.set(0, 1.3, -R - 0.05);
+      b.add(door);
+
+      // fût en verre (étages de la tour de contrôle)
+      const shaft = new THREE.Mesh(
+        new THREE.CylinderGeometry(R, R, 19, 28),
+        [glassMat, whiteMat, whiteMat]
+      );
+      shaft.position.y = 3 + 9.5; shaft.castShadow = true; shaft.receiveShadow = true;
+      b.add(shaft);
+
+      // bandeaux publicitaires autour de chaque niveau
+      const banners = [
+        [5.2,  'AUTOMOBILE CLUB DE L\'OUEST', '#0d3b8f', '#ffd400'],
+        [9.6,  '24 HEURES DU MANS',            '#ffd400', '#0d3b8f'],
+        [14.0, 'AUTOMOBILE CLUB DE L\'OUEST', '#0d3b8f', '#ffd400'],
+        [18.4, 'ENDURANCE • 24H LE MANS',      '#ffd400', '#0d3b8f'],
+        [21.6, 'ACO • AUTOMOBILE CLUB DE L\'OUEST', '#0d3b8f', '#ffffff']
+      ];
+      for (const [y, text, bg, fg] of banners) {
+        const band = new THREE.Mesh(
+          new THREE.CylinderGeometry(R + 0.25, R + 0.25, 2.1, 28, 1, true),
+          new THREE.MeshStandardMaterial({ map: acoBannerTexture(text, bg, fg), side: THREE.DoubleSide, roughness: 0.6 })
+        );
+        band.position.y = y;
+        b.add(band);
+      }
+
+      // grand toit plat en porte-à-faux
+      const roof = new THREE.Mesh(new THREE.CylinderGeometry(10.2, 10.2, 0.7, 32), darkMat);
+      roof.position.y = 22.35; roof.castShadow = true;
+      b.add(roof);
+      const parapet = new THREE.Mesh(new THREE.CylinderGeometry(10.25, 10.25, 0.9, 32, 1, true), darkMat);
+      parapet.position.y = 22.9;
+      b.add(parapet);
+      // antenne + gyrophare rouge au sommet
+      const mast = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.09, 0.09, 4.5, 6),
+        new THREE.MeshStandardMaterial({ color: 0x9e9e9e, metalness: 0.7, roughness: 0.3 })
+      );
+      mast.position.y = 25;
+      b.add(mast);
+      const beacon = new THREE.Mesh(
+        new THREE.SphereGeometry(0.35, 10, 8),
+        new THREE.MeshStandardMaterial({ color: 0xff2222, emissive: 0xcc0000, emissiveIntensity: 1.4 })
+      );
+      beacon.position.y = 27.4;
+      b.add(beacon);
+
+      // bâtiment annexe blanc avec enseigne 24H
+      const annex = new THREE.Mesh(
+        new THREE.BoxGeometry(17, 7, 9),
+        new THREE.MeshStandardMaterial({ map: acoAnnexTexture(), roughness: 0.7 })
+      );
+      annex.position.set(13, 3.5, 2);
+      annex.castShadow = true; annex.receiveShadow = true;
+      b.add(annex);
+      const annexRoof = new THREE.Mesh(new THREE.BoxGeometry(17.6, 0.4, 9.6), darkMat);
+      annexRoof.position.set(13, 7.2, 2);
+      annexRoof.castShadow = true;
+      b.add(annexRoof);
+      const sign = new THREE.Mesh(
+        new THREE.PlaneGeometry(10, 1.8),
+        new THREE.MeshStandardMaterial({ map: acoBannerTexture('24 HEURES DU MANS', '#b3121f', '#ffffff'), roughness: 0.6 })
+      );
+      sign.position.set(13, 6.2, -2.56);
+      b.add(sign);
+
+      b.scale.setScalar(p.scale);
+      return b;
+    }
+  },
+};
+
+// Tracés des circuits, partagés entre le jeu (index.html) et l'éditeur (editeur.html)
+// (source unique : ne pas dupliquer dans les pages)
+const CIRCUITS = [
+  {
+    name: '🏁 Le Mans',
+    points: [
+      [0, -90], [70, -95], [130, -70], [150, -20], [130, 30], [150, 80],
+      [110, 120], [40, 105], [10, 130], [-50, 125], [-100, 95], [-130, 60],
+      [-110, 10], [-140, -40], [-90, -70]
+    ]
+  },
+  {
+    name: '🐍 Le Serpent',
+    points: [
+      [0, -100], [60, -80], [30, -40], [80, -10], [40, 30], [90, 60],
+      [50, 95], [0, 80], [-40, 110], [-90, 80], [-60, 40], [-110, 10],
+      [-70, -30], [-120, -60], [-60, -90]
+    ]
+  },
+  {
+    name: '🥚 L\'Ovale Turbo',
+    points: [
+      [0, -110], [80, -105], [140, -70], [160, -10], [150, 50],
+      [110, 100], [40, 115], [-40, 110], [-110, 85], [-150, 40],
+      [-160, -20], [-140, -75], [-80, -108]
+    ]
+  },
+  {
+    name: '🏜️ Le Canyon',
+    points: [
+      [0, -80], [50, -95], [110, -80], [130, -40], [100, -10],
+      [140, 20], [110, 55], [60, 45], [30, 80], [-20, 70],
+      [-50, 100], [-100, 90], [-120, 50], [-90, 20], [-130, -10],
+      [-100, -50], [-50, -60]
+    ]
+  }
+];
+
 
 /* ============================= SCÈNE ============================= */
 const container = document.getElementById('game');
@@ -53187,43 +53751,17 @@ scene.add(sun);
 
 /* ============================= CIRCUIT ============================= */
 // Plusieurs circuits au choix (boucles fermées)
-const CIRCUITS = [
-  {
-    name: '🏁 Le Mans',
-    points: [
-      [0, -90], [70, -95], [130, -70], [150, -20], [130, 30], [150, 80],
-      [110, 120], [40, 105], [10, 130], [-50, 125], [-100, 95], [-130, 60],
-      [-110, 10], [-140, -40], [-90, -70]
-    ]
-  },
-  {
-    name: '🐍 Le Serpent',
-    points: [
-      [0, -100], [60, -80], [30, -40], [80, -10], [40, 30], [90, 60],
-      [50, 95], [0, 80], [-40, 110], [-90, 80], [-60, 40], [-110, 10],
-      [-70, -30], [-120, -60], [-60, -90]
-    ]
-  },
-  {
-    name: '🥚 L\'Ovale Turbo',
-    points: [
-      [0, -110], [80, -105], [140, -70], [160, -10], [150, 50],
-      [110, 100], [40, 115], [-40, 110], [-110, 85], [-150, 40],
-      [-160, -20], [-140, -75], [-80, -108]
-    ]
-  },
-  {
-    name: '🏜️ Le Canyon',
-    points: [
-      [0, -80], [50, -95], [110, -80], [130, -40], [100, -10],
-      [140, 20], [110, 55], [60, 45], [30, 80], [-20, 70],
-      [-50, 100], [-100, 90], [-120, 50], [-90, 20], [-130, -10],
-      [-100, -50], [-50, -60]
-    ]
-  }
-];
+
 // Circuit choisi (stocké en localStorage, 0 par défaut)
 const circuitIndex = Math.max(0, Math.min(CIRCUITS.length - 1, parseInt(localStorage.getItem('turboCircuit') || '0')));
+// Tracé éventuellement modifié dans l'éditeur de carte (editeur.html)
+// Priorité au fichier carte-editeur.js (partagé avec jeu.html ouvert en file://), sinon localStorage.
+try {
+  const pistesFichier = window.__CARTE_EDITEUR__ && window.__CARTE_EDITEUR__.pistes;
+  const pistesModifiees = pistesFichier || JSON.parse(localStorage.getItem('turbo-circuit-pistes') || '{}');
+  const modif = pistesModifiees[circuitIndex];
+  if (Array.isArray(modif) && modif.length >= 3) CIRCUITS[circuitIndex].points = modif;
+} catch (e) { /* tracé par défaut */ }
 const trackPoints = CIRCUITS[circuitIndex].points.map(([x, z]) => new THREE.Vector3(x, 0, z));
 // Met à jour le titre de la page avec le nom du circuit
 document.title = 'Turbo Circuit — ' + CIRCUITS[circuitIndex].name;
@@ -53241,6 +53779,63 @@ function nearestOnTrack(pos) {
     if (d < bestD) { bestD = d; best = i; }
   }
   return { index: best, dist: Math.sqrt(bestD) };
+}
+
+/* ================= MONDE EN DONNÉES =================
+   Couche statique (non éditable) : piste, bords, barrière invisible.
+   Couche dynamique (éditable via editeur.html) : tous les objets placés,
+   sérialisés dans monde.json à côté du jeu (miroir monde.js pour file://).
+   Le procédural ne tourne qu'à la création : si aucune donnée n'existe,
+   on génère le monde une fois et on l'exporte. */
+const monde = { version: 1, circuit: circuitIndex, objets: [] };
+let modeData = false;
+let dataMonde = null;
+
+// Pose un objet de la bibliothèque et l'enregistre dans les données du monde
+function poser(id, x, z, rotationDeg, params, enregistrer = true) {
+  const def = library[id];
+  if (!def) return null;
+  const p = Object.assign({}, def.params, params || {});
+  const mesh = def.build(p);
+  mesh.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  mesh.position.set(x, 0, z);
+  mesh.rotation.y = (rotationDeg || 0) * Math.PI / 180;
+  scene.add(mesh);
+  if (enregistrer) monde.objets.push({ id, x, z, rotation: rotationDeg || 0, params: p });
+  return mesh;
+}
+
+// Cherche des données de monde existantes (miroir monde.js d'abord, puis localStorage)
+function mondeExistant() {
+  if (window.__MONDE__ && Array.isArray(window.__MONDE__.objets) && window.__MONDE__.objets.length) return window.__MONDE__;
+  try {
+    const m = JSON.parse(localStorage.getItem('turbo-monde') || 'null');
+    if (m && Array.isArray(m.objets) && m.objets.length) return m;
+  } catch (e) {}
+  // Rétrocompatibilité avec l'ancien format de l'éditeur
+  if (window.__CARTE_EDITEUR__ && window.__CARTE_EDITEUR__.carte && window.__CARTE_EDITEUR__.carte.objets) {
+    return { version: 1, circuit: circuitIndex, objets: window.__CARTE_EDITEUR__.carte.objets };
+  }
+  try {
+    const c = JSON.parse(localStorage.getItem('turbo-circuit-carte') || 'null');
+    if (c && Array.isArray(c.objets) && c.objets.length) return { version: 1, circuit: circuitIndex, objets: c.objets };
+  } catch (e) {}
+  return null;
+}
+
+dataMonde = mondeExistant();
+modeData = !!dataMonde;
+
+// Exporte le monde (objets) en données : localStorage + monde.json via le serveur
+function sauvegarderMonde() {
+  try { localStorage.setItem('turbo-monde', JSON.stringify(monde)); } catch (e) {}
+  try {
+    fetch('/__save-monde', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(monde)
+    }).catch(() => {});
+  } catch (e) { /* file:// : localStorage suffit */ }
 }
 
 // Route : ruban triangulé le long de la courbe
@@ -53344,10 +53939,8 @@ function buildWall(offset) {
   return mesh;
 }
 // Murs sur les bords (uniquement sur Le Mans — sur les autres circuits ils débordent dans les virages serrés)
-if (circuitIndex === 0) {
-  scene.add(buildWall(-ROAD_HALF - 2.8));
-  scene.add(buildWall(ROAD_HALF + 2.8));
-}
+// Murs visuels supprimés : barrière invisible anti-sortie gérée dans la physique
+// des karts (const LIMITE_INVISIBLE plus bas), à ROAD_HALF + 15 du centre de la piste.
 
 // Barrières à bandes rouges/blanches à certains endroits du circuit
 function stripedTexture() {
@@ -53432,54 +54025,10 @@ function buildStand(frac, sideSign, rows, seats) {
   stand.rotation.y = Math.atan2(-t.z, t.x); // face à la piste
   scene.add(stand);
 }
-// Grands gradins au départ (des deux côtés, décalés pour éviter les poteaux du portique)
-// Tribunes sur tous les circuits (plus seulement Le Mans et l'ovale)
-for (let k = 0; k < 10; k++) {
-  const frac = k / 10;
-  const i = Math.floor(frac * SAMPLES);
-  const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
-  const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-  const sideSign = k % 2 === 0 ? 1 : -1;
-  // Ne PAS mettre de tribune côté droit (sideSign=-1) dans la zone des stands
-  let dStart = frac; dStart = Math.min(dStart, 1 - dStart);
-  if (sideSign === -1 && dStart < 0.12) continue; // zone pit lane à droite
-  const tx = p.x + side.x * sideSign * (ROAD_HALF + 8);
-  const tz = p.z + side.z * sideSign * (ROAD_HALF + 8);
-  if (isFarFromTrack(tx, tz, ROAD_HALF + 4)) {
-    buildStand(frac, sideSign, 4 + (k % 3), 6 + (k % 4));
-  }
-}
-
-// Tribunes supplémentaires spécifiques
-if (circuitIndex === 0) {
-  buildStand(0.015, 1, 6, 9);
-  buildStand(0.985, -1, 6, 9);
-  buildStand(0.08, 1, 4, 6);
-  buildStand(0.30, -1, 4, 6);
-  buildStand(0.50, 1, 4, 6);
-  buildStand(0.68, -1, 4, 6);
-  buildStand(0.85, 1, 4, 6);
-}
-
-// Tribunes tout autour de l'ovale (index 2) — avec vérification anti-bug
-if (circuitIndex === 2) {
-  for (let k = 0; k < 24; k++) {
-    const frac = k / 24;
-    const i = Math.floor(frac * SAMPLES);
-    const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
-    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-    const sideSign = k % 2 === 0 ? 1 : -1;
-    const tx = p.x + side.x * sideSign * (ROAD_HALF + 8);
-    const tz = p.z + side.z * sideSign * (ROAD_HALF + 8);
-    // Ne placer la tribune que si elle est bien dégagée de toute la piste
-    if (isFarFromTrack(tx, tz, ROAD_HALF + 4)) {
-      buildStand(frac, sideSign, 5, 10);
-    }
-  }
-}
+// Tribunes supprimées à la demande du joueur (plus aucune buildStand dans le monde)
 
 // Barrières sur les extérieurs des virages serrés (fractions spécifiques au Mans)
-if (circuitIndex === 0) {
+if (!modeData && circuitIndex === 0) {
   const barrierSpots = [
     [0.03, 0.16],  // virage est
     [0.28, 0.42],  // virage nord-est
@@ -53487,8 +54036,15 @@ if (circuitIndex === 0) {
     [0.80, 0.93]   // virage sud-ouest
   ];
   for (const [a, b] of barrierSpots) {
-    scene.add(buildBarrier(Math.floor(a * SAMPLES), Math.floor(b * SAMPLES), ROAD_HALF + 1.8));
-    scene.add(buildBarrier(Math.floor(a * SAMPLES), Math.floor(b * SAMPLES), -ROAD_HALF - 1.8));
+    for (let k = 0; k < 4; k++) {
+      const frac = a + (b - a) * (k / 3);
+      const i = Math.floor(frac * SAMPLES);
+      const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
+      const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+      const rot = Math.atan2(t.x, t.z) * 180 / Math.PI;
+      poser('barrier', p.x + side.x * (ROAD_HALF + 1.8), p.z + side.z * (ROAD_HALF + 1.8), rot, {});
+      poser('barrier', p.x - side.x * (ROAD_HALF + 1.8), p.z - side.z * (ROAD_HALF + 1.8), rot, {});
+    }
   }
 }
 
@@ -53504,19 +54060,15 @@ scene.add(ground);
 
 // Pads de boost
 const boostPads = [];
-const boostMat = new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x0088aa });
-[0.25, 0.55, 0.8].forEach(frac => {
-  const i = Math.floor(frac * SAMPLES);
-  const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
-  const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-  const g = new THREE.PlaneGeometry(ROAD_HALF * 2, 5);
-  const m = new THREE.Mesh(g, boostMat.clone());
-  m.rotation.x = -Math.PI / 2;
-  m.rotation.z = Math.atan2(-t.x, -t.z);
-  m.position.set(p.x, 0.05, p.z);
-  scene.add(m);
-  boostPads.push({ index: i, mesh: m, cooldown: 0 });
-});
+if (!modeData) {
+  [0.25, 0.55, 0.8].forEach(frac => {
+    const i = Math.floor(frac * SAMPLES);
+    const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
+    const rot = Math.atan2(-t.x, -t.z) * 180 / Math.PI;
+    const m = poser('boost', p.x, p.z, rot, { width: ROAD_HALF * 2, length: 5 });
+    boostPads.push({ index: i, mesh: m, cooldown: 0 });
+  });
+}
 
 // Zone de stands : boxes individuels à DROITE de la piste, près de la ligne de départ
 const pitBoxes = []; // { pos: Vector3, heading, takenBy: player|null }
@@ -53590,36 +54142,7 @@ const pitBoxes = []; // { pos: Vector3, heading, takenBy: player|null }
     pitBoxes.push({ pos: boxCenter.clone(), heading, takenBy: null });
   }
 
-  // --- GRAND PANNEAU "ARRÊT AU STAND" AVANT les boxes, côté droit, sans déborder sur la route ---
-  {
-    const c = document.createElement('canvas'); c.width = 1024; c.height = 128;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#d8342c'; ctx.fillRect(0, 0, 1024, 128);
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 6; ctx.strokeRect(3, 3, 1018, 122);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 72px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('ARRÊT AU STAND', 512, 68);
-    const tex = new THREE.CanvasTexture(c);
-    const bannerW = 16;
-    const banner = new THREE.Mesh(
-      new THREE.BoxGeometry(bannerW, 2, 0.4),
-      new THREE.MeshStandardMaterial({ map: tex, emissive: 0x441111, emissiveIntensity: 0.3 })
-    );
-    // Placé AVANT les boxes (frac 0.985), côté droit, bien dégagé de la route
-    const siSign = 0.985;
-    const pSign = samples[Math.floor(siSign * SAMPLES) % SAMPLES];
-    const tSign = curve.getTangentAt(siSign);
-    const sSign = new THREE.Vector3(-tSign.z, 0, tSign.x).normalize();
-    banner.position.copy(pSign).addScaledVector(sSign, -(ROAD_HALF + 8));
-    banner.position.y = 5;
-    banner.rotation.y = Math.atan2(tSign.x, tSign.z);
-    banner.castShadow = true;
-    scene.add(banner);
-    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 5, 8),
-      new THREE.MeshStandardMaterial({ color: 0xd8342c, roughness: 0.5 }));
-    post.position.copy(pSign).addScaledVector(sSign, -(ROAD_HALF + 9.5));
-    post.position.y = 2.5;
-    scene.add(post);
-  }
+  // --- GRAND PANNEAU "ARRÊT AU STAND" supprimé à la demande du joueur ---
 }
 
 // Caisses bonus "?" flottantes (style Mario Kart)
@@ -53641,23 +54164,18 @@ function questionTexture() {
   return new THREE.CanvasTexture(c);
 }
 const boxTex = questionTexture();
-[0.18, 0.45, 0.72].forEach(frac => {
-  const i = Math.floor(frac * SAMPLES);
-  const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
-  const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-  // Caisses sur la piste (style Mario Kart — elles n'ont pas de collision physique, on les traverse pour les ramasser)
-  [-ROAD_HALF * 0.5, 0, ROAD_HALF * 0.5].forEach(off => {
-    const m = new THREE.Mesh(
-      new THREE.BoxGeometry(1.8, 1.8, 1.8),
-      new THREE.MeshStandardMaterial({ map: boxTex, emissive: 0x664400 })
-    );
-    m.position.copy(p).addScaledVector(side, off);
-    m.position.y = 1.6;
-    m.castShadow = true;
-    scene.add(m);
-    itemBoxes.push({ mesh: m, taken: false, respawn: 0 });
+if (!modeData) {
+  [0.18, 0.45, 0.72].forEach(frac => {
+    const i = Math.floor(frac * SAMPLES);
+    const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
+    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+    // Caisses sur la piste (style Mario Kart — elles n'ont pas de collision physique, on les traverse pour les ramasser)
+    [-ROAD_HALF * 0.5, 0, ROAD_HALF * 0.5].forEach(off => {
+      const m = poser('itembox', p.x + side.x * off, p.z + side.z * off, 0, {});
+      if (m) { m.position.y = 1.6; itemBoxes.push({ mesh: m, taken: false, respawn: 0 }); }
+    });
   });
-});
+}
 // Carapace (projectile)
 function fireShell(p) {
   const m = new THREE.Mesh(
@@ -53670,38 +54188,11 @@ function fireShell(p) {
   shells.push({ mesh: m, dir: new THREE.Vector3(Math.sin(p.heading), 0, Math.cos(p.heading)), life: 4, owner: p });
 }
 
-// Portique de départ
-{
+// Portique de départ (objet data : 'arch')
+if (!modeData) {
   const p0 = samples[0], t0 = curve.getTangentAt(0);
-  const side = new THREE.Vector3(-t0.z, 0, t0.x).normalize();
-  const archMat = new THREE.MeshStandardMaterial({ color: 0xd8342c, roughness: 0.5 });
-  const gantry = new THREE.Group();
-  const postG = new THREE.CylinderGeometry(0.5, 0.5, 9, 10);
-  [-1, 1].forEach(s => {
-    const post = new THREE.Mesh(postG, archMat);
-    post.position.set(s * (ROAD_HALF + 1.2), 4.5, 0);
-    post.castShadow = true;
-    gantry.add(post);
-  });
-  const bannerTex = (() => {
-    const c = document.createElement('canvas');
-    c.width = 512; c.height = 64;
-    const x = c.getContext('2d');
-    x.fillStyle = '#d8342c'; x.fillRect(0, 0, 512, 64);
-    x.fillStyle = '#fff'; x.font = 'bold 40px Arial'; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.fillText('🏁 DÉPART 🏁', 256, 34);
-    return new THREE.CanvasTexture(c);
-  })();
-  const banner = new THREE.Mesh(
-    new THREE.BoxGeometry((ROAD_HALF + 1.2) * 2, 1.6, 0.4),
-    new THREE.MeshStandardMaterial({ map: bannerTex })
-  );
-  banner.position.set(0, 9, 0);
-  gantry.add(banner);
-  gantry.position.copy(p0);
-  // oriente l'axe X local du portique le long du bord de la route
-  gantry.rotation.y = Math.atan2(-t0.x, -t0.z);
-  scene.add(gantry);
+  poser('arch', p0.x, p0.z, Math.atan2(-t0.x, -t0.z) * 180 / Math.PI,
+    { color: '#d8342c', width: (ROAD_HALF + 1.2) * 2 });
 }
 
 // Bâtiment ACO des 24 Heures du Mans — tour de direction de course ronde (style photo)
@@ -53809,8 +54300,14 @@ function buildACOBuilding(frac, sideSign) {
   b.rotation.y = Math.atan2(-t.z, t.x);
   scene.add(b);
 }
-// Tour ACO juste après la ligne de départ (uniquement sur Le Mans)
-if (circuitIndex === 0) buildACOBuilding(0.05, 1);
+// Tour ACO juste après la ligne de départ (uniquement sur Le Mans) — objet data : 'aco'
+if (!modeData && circuitIndex === 0) {
+  const i = Math.floor(0.05 * SAMPLES);
+  const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
+  const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+  poser('aco', p.x + side.x * (ROAD_HALF + 25), p.z + side.z * (ROAD_HALF + 25),
+    Math.atan2(-t.z, t.x) * 180 / Math.PI, {});
+}
 
 // Long bâtiment du paddock qui longe TOUTE la ligne de départ (style bâtiment des stands du Mans)
 function pitFrontTexture() {
@@ -53886,14 +54383,8 @@ function buildPitBuilding(fracStart, fracEnd, offset) {
   }
   scene.add(g);
 }
-// le bâtiment s'étend sur toute la longueur de la ligne de départ (de 0.962 à 0.078, en passant par la ligne)
-if (circuitIndex === 0) buildPitBuilding(0.962, 0.078, ROAD_HALF + 25);
-
-// Tribunes principales en face de la tour ACO (côté opposé de la piste)
-if (circuitIndex === 0) {
-  buildStand(0.055, -1, 8, 14);
-  buildStand(0.105, -1, 6, 10);
-}
+// Bâtiment des stands (pit) supprimé à la demande du joueur
+// Tribunes principales supprimées à la demande du joueur
 
 // Décor : arbres et panneaux
 function addTree(x, z) {
@@ -53919,26 +54410,26 @@ function isFarFromTrack(x, z, minDist) {
   }
   return true;
 }
-for (let i = 0; i < SAMPLES; i += 20) {
-  const p = samples[i];
-  const t = curve.getTangentAt(i / SAMPLES);
-  const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-  const r1 = 22 + (i % 3) * 5, r2 = 22 + ((i + 7) % 3) * 5;
-  const x1 = p.x + side.x * r1, z1 = p.z + side.z * r1;
-  const x2 = p.x - side.x * r2, z2 = p.z - side.z * r2;
-  if (isFarFromTrack(x1, z1, ROAD_HALF + 6)) addTree(x1, z1);
-  if (isFarFromTrack(x2, z2, ROAD_HALF + 6)) addTree(x2, z2);
-}
-// Quelques arbres au centre (uniquement sur Le Mans, coordonnées fixes)
-if (circuitIndex === 0) {
-  [[0, 20], [40, 60], [-60, 40], [30, -30], [-30, -20]].forEach(([x, z]) => addTree(x, z));
+if (!modeData) {
+  for (let i = 0; i < SAMPLES; i += 20) {
+    const p = samples[i];
+    const t = curve.getTangentAt(i / SAMPLES);
+    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
+    const r1 = 22 + (i % 3) * 5, r2 = 22 + ((i + 7) % 3) * 5;
+    const x1 = p.x + side.x * r1, z1 = p.z + side.z * r1;
+    const x2 = p.x - side.x * r2, z2 = p.z - side.z * r2;
+    if (isFarFromTrack(x1, z1, ROAD_HALF + 6)) poser('tree', x1, z1, Math.random() * 360, {});
+    if (isFarFromTrack(x2, z2, ROAD_HALF + 6)) poser('tree', x2, z2, Math.random() * 360, {});
+  }
+  // Quelques arbres au centre (uniquement sur Le Mans, coordonnées fixes)
+  if (circuitIndex === 0) {
+    [[0, 20], [40, 60], [-60, 40], [30, -30], [-30, -20]].forEach(([x, z]) => poser('tree', x, z, 0, {}));
+  }
 }
 
 // Buissons et fleurs colorées
-{
-  const bushMat = new THREE.MeshStandardMaterial({ color: 0x388e3c, roughness: 1, flatShading: true });
-  const flowerMats = [0xff6f91, 0xffd54f, 0xba68c8, 0xffffff].map(c =>
-    new THREE.MeshStandardMaterial({ color: c, roughness: 0.8 }));
+if (!modeData) {
+  const flowerColors = ['#ff6f91', '#ffd54f', '#ba68c8', '#ffffff'];
   for (let i = 0; i < SAMPLES; i += 7) {
     const p = samples[i];
     const t = curve.getTangentAt(i / SAMPLES);
@@ -53947,20 +54438,35 @@ if (circuitIndex === 0) {
     const s = i % 2 ? 1 : -1;
     const bx = p.x + side.x * r * s, bz = p.z + side.z * r * s;
     if (isFarFromTrack(bx, bz, ROAD_HALF + 5)) {
-      const b = new THREE.Mesh(new THREE.SphereGeometry(1 + (i % 3) * 0.4, 6, 5), bushMat);
-      b.position.set(bx, 0.6, bz);
-      b.scale.y = 0.7;
-      scene.add(b);
+      poser('bush', bx, bz, Math.random() * 360, { color: '#388e3c', scale: 1 + (i % 3) * 0.4 });
       if (i % 14 === 0) {
         const fx = p.x - side.x * (r + 1.5) * s, fz = p.z - side.z * (r + 1.5) * s;
         if (isFarFromTrack(fx, fz, ROAD_HALF + 2)) {
-          const f = new THREE.Mesh(new THREE.SphereGeometry(0.35, 6, 5), flowerMats[i % 4]);
-          f.position.set(fx, 0.35, fz);
-          scene.add(f);
+          poser('flower', fx, fz, 0, { color: flowerColors[i % 4], scale: 1 });
         }
       }
     }
   }
+}
+
+/* ---------- Monde chargé depuis les données (monde.json / éditeur de carte) ----------
+   Si des données existent, elles remplacent TOUT le décor procédural :
+   seuls les objets de la data sont instanciés (plus les éléments de gameplay
+   enregistrés ci-dessous : caisses et pads de boost). */
+if (modeData) {
+  let places = 0;
+  dataMonde.objets.forEach(o => {
+    const mesh = poser(o.id, +o.x || 0, +o.z || 0, +o.rotation || 0, o.params || {}, false);
+    if (!mesh) return;
+    if (o.id === 'itembox') { mesh.position.y = 1.6; itemBoxes.push({ mesh, taken: false, respawn: 0 }); }
+    if (o.id === 'boost') boostPads.push({ index: 0, mesh, cooldown: 0 });
+    places++;
+  });
+  console.log('Monde chargé depuis les données :', places, 'objet(s)');
+} else {
+  // Première génération : le monde procédural devient de la data exportée
+  sauvegarderMonde();
+  console.log('Monde généré procéduralement et exporté :', monde.objets.length, 'objet(s)');
 }
 
 /* ============================= KARTS ============================= */
@@ -54156,6 +54662,7 @@ function botInput(p, dt) {
   const needsPit = p.tires < 25 && !p.exploded;
   let distToPit = Math.abs(near.index); distToPit = Math.min(distToPit, SAMPLES - distToPit);
   if (needsPit && distToPit < SAMPLES * 0.12) {
+    // trouve le premier box libre (ou le sien)
     let targetBox = p.pitBox || pitBoxes.find(b => !b.takenBy || b.takenBy === p);
     if (targetBox) {
       target = targetBox.pos.clone();
@@ -54240,7 +54747,7 @@ let countdown = 3.999;
 let preQualifTimer = 0; // compte à rebours avant le début de la qualif
 let raceClock = 0;
 let animTime = 0;
-// Qualification automatique avant la course : les deux joueurs en même temps
+// Qualification automatique avant la course : tour chrono de J1 puis J2
 let qualifClock = 0;
 // En qualification, les deux joueurs roulent EN MÊME TEMPS
 const isQualifActive = p => raceState === 'qualif' && !p.bot;
@@ -54342,24 +54849,28 @@ function updatePlayer(p, dt) {
   const nearT = curve.getTangentAt(near.index / SAMPLES);
   const nearSide = new THREE.Vector3(-nearT.z, 0, nearT.x).normalize();
   const lateral = (p.pos.x - nearP.x) * nearSide.x + (p.pos.z - nearP.z) * nearSide.z;
-  // Zone de pit : autour de la ligne de départ (index ~0)
+  // Zone de pit : détection par proximité avec un box de stand
   let dStart = Math.abs(near.index); dStart = Math.min(dStart, SAMPLES - dStart);
   const inPitZone = dStart < SAMPLES * 0.11;
   const PIT_LANE_INNER = -(ROAD_HALF + 0.5);
   const PIT_LANE_OUTER = -(ROAD_HALF + 11);
 
   if (inPitZone && lateral < PIT_LANE_INNER && lateral > PIT_LANE_OUTER) {
-    // Dans l'allée des stands : autorisé, pas de mur
     p.inPitLane = true;
   } else {
     p.inPitLane = false;
-    if (near.dist > ROAD_HALF + 1.2) {
-      // repousse vers la route
+    // Barrière invisible anti-sortie (aucun mur visible) : limite dure à ROAD_HALF + 15
+    const LIMITE_INVISIBLE = ROAD_HALF + 15;
+    if (near.dist > LIMITE_INVISIBLE) {
+      const dir = nearP.clone().sub(p.pos).setY(0).normalize();
+      p.pos.copy(nearP).addScaledVector(dir, LIMITE_INVISIBLE);
+      p.speed *= 0.6;
+    } else if (near.dist > ROAD_HALF + 1.2) {
       const dir = nearP.clone().sub(p.pos).setY(0).normalize();
       p.pos.addScaledVector(dir, (near.dist - (ROAD_HALF + 1.2)) * 0.5);
       p.speed *= 0.92;
     } else if (near.dist > ROAD_HALF - 0.5) {
-      p.speed *= 0.985; // vibreur sur les bordures
+      p.speed *= 0.985;
     }
   }
 
@@ -54378,16 +54889,18 @@ function updatePlayer(p, dt) {
 
   // Pneus morts (0%) : la voiture fume puis explose
   if (p.tires <= 0 && raceState === 'racing' && !p.finished && !p.exploded) {
+    // fumée noire continue
     if (Math.random() < 0.5) {
       spawnParticle(p.pos.x, 1.2, p.pos.z, 0x222222, 0.8, 1.5);
       spawnParticle(p.pos.x + (Math.random()-0.5), 0.8, p.pos.z + (Math.random()-0.5), 0x444444, 0.5, 1);
     }
     p.smokeTimer = (p.smokeTimer || 0) + dt;
-    p.speed *= Math.max(0, 1 - 2 * dt);
+    p.speed *= Math.max(0, 1 - 2 * dt); // ralentit fortement
     if (p.smokeTimer > 3) {
+      // EXPLOSION
       p.exploded = true;
       p.speed = 0;
-      p.hit = 999;
+      p.hit = 999; // toupie incontrôlable
       for (let i = 0; i < 30; i++) {
         spawnParticle(
           p.pos.x + (Math.random()-0.5)*3, 1 + Math.random()*2, p.pos.z + (Math.random()-0.5)*3,
@@ -54397,6 +54910,7 @@ function updatePlayer(p, dt) {
     }
   }
   if (p.exploded) {
+    // reste à l'arrêt, fumée persistante
     if (Math.random() < 0.3) spawnParticle(p.pos.x, 1, p.pos.z, 0x111111, 1, 2);
   }
 
@@ -54410,6 +54924,7 @@ function updatePlayer(p, dt) {
       p.pitBox = box;
       if (!box.takenBy) box.takenBy = p;
       p.pitTimer += dt;
+      // Mécaniciens dans la voiture (positionnés sur le kart)
       if (p.mechanics) {
         p.mechanics.forEach((m, i) => {
           m.visible = true;
@@ -54597,6 +55112,21 @@ CIRCUITS.forEach((c, i) => {
   circuitBtnsEl.appendChild(btn);
 });
 
+// "Nouveau monde" : efface les données de monde → au rechargement, le jeu régénère
+// le monde procédural une fois et l'exporte (monde.json + monde.js)
+document.getElementById('btn-nouveau-monde').addEventListener('click', () => {
+  if (!confirm('Régénérer un nouveau monde ? Le monde actuel (monde.json) sera remplacé.')) return;
+  localStorage.removeItem('turbo-monde');
+  localStorage.removeItem('turbo-circuit-carte');
+  localStorage.removeItem('turbo-circuit-pistes');
+  // remet le miroir monde.js à vide via le serveur (sinon file:// garderait l'ancien)
+  fetch('/__save-monde', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ version: 1, circuit: circuitIndex, objets: [] })
+  }).catch(() => {}).finally(() => setTimeout(() => location.reload(), 300));
+});
+
 function startRace(level) {
   botLevel = level;
   menuEl.classList.add('hidden');
@@ -54611,6 +55141,12 @@ function startQualif() {
   qualifClock = 0;
   p1.qualifTime = null; p2.qualifTime = null;
   p1.qualifHalf = false; p2.qualifHalf = false;
+  // Pendant la qualif : chaque joueur ne voit pas les autres karts
+  for (const p of players) {
+    p.kart.group.visible = (p === p1 || p === p2) ? true : false;
+  }
+  p1.kart.group.visible = true; p2.kart.group.visible = true;
+  // Cache les autres joueurs dans chaque vue (sera géré dans le rendu)
   speak('C\'est parti pour les qualifications !');
 }
 // Course lancée après la qualif : grille ordonnée par les temps (pole = plus rapide)
@@ -54743,15 +55279,23 @@ function animate() {
   updateCamera(camera1, p1);
   updateCamera(camera2, p2);
 
+  // Pendant la qualif : chaque joueur ne voit que son propre kart (les autres sont cachés)
+  if (raceState === 'qualif') {
+    for (const p of players) {
+      if (p === p1) p.kart.group.visible = false; // J2 ne voit pas J1
+    }
+  }
+
   // Rendu écran partagé
   const w = window.innerWidth, h = window.innerHeight;
   renderer.setScissorTest(true);
-  // Pendant la qualif : chaque joueur ne voit que son propre kart
+  // Vue J1 : cacher le kart de J2
   if (raceState === 'qualif') { p2.kart.group.visible = false; p1.kart.group.visible = true; }
   else { for (const p of players) p.kart.group.visible = true; }
   renderer.setViewport(0, 0, w / 2, h); renderer.setScissor(0, 0, w / 2, h);
   camera1.aspect = (w / 2) / h; camera1.updateProjectionMatrix();
   renderer.render(scene, camera1);
+  // Vue J2 : cacher le kart de J1
   if (raceState === 'qualif') { p1.kart.group.visible = false; p2.kart.group.visible = true; }
   else { for (const p of players) p.kart.group.visible = true; }
   renderer.setViewport(w / 2, 0, w / 2, h); renderer.setScissor(w / 2, 0, w / 2, h);
@@ -54770,6 +55314,8 @@ function animate() {
     : raceState === 'qualif'
       ? (p.qualifTime !== null ? `⏱️ qualif ${p.qualifTime.toFixed(1)}s ✓` : raceState === 'qualif' ? `⏱️ qualif — ${qualifClock.toFixed(1)}s` : '⏱️ en attente…')
       : `Tour ${p.lap}/${TOTAL_LAPS} — ${Math.abs(p.speed * 3.6).toFixed(0)} km/h — 🛞 ${Math.round(p.tires)}%`
+        + (p.inPitLane && !p.inPit ? ' — 🅿️ STANDS : ralentis dans un box !' : '')
+        + (p.inPit ? ' — 🔧 Changement de pneus…' : '')
         + (p.inPit ? ` 🔧 PIT ${Math.ceil(7 - p.pitTimer)}s` : '') + (p.bestLap !== null ? ` — ⏱️ record ${p.bestLap.toFixed(1)}s` : '');
   hud1.textContent = `${CIRCUITS[circuitIndex].name} — 🔴 J1 — ${fmt(p1)}${p1.item ? '  ' + p1.item.icon : ''}${p1.star > 0 ? ' ✨' : ''}`;
   hud2.textContent = `🔵 J2 — ${fmt(p2)}${p2.item ? '  ' + p2.item.icon : ''}${p2.star > 0 ? ' ✨' : ''}`;
