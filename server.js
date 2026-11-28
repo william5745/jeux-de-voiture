@@ -4,6 +4,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { validerMonde, texteMiroirJs, idsBibliothequeDepuisSource } from './monde-data.js';
 
 const DOSSIER = path.dirname(fileURLToPath(import.meta.url));
 
@@ -15,19 +16,40 @@ const MIME = {
   '.json': 'application/json; charset=utf-8'
 };
 
+// ids valides du catalogue (lus une fois depuis objets.js)
+let idsValides = null;
+function idsLibrary(dossier) {
+  if (!idsValides) {
+    idsValides = idsBibliothequeDepuisSource(fs.readFileSync(path.join(dossier, 'objets.js'), 'utf8'));
+  }
+  return idsValides;
+}
+
 // Écrit les deux fichiers de données d'un circuit :
-// monde-<c>.json (source de vérité) + monde-<c>.js (miroir file://).
-// Le format du miroir est délégué à texteMiroirJs() (monde-data.js) pour rester identique partout.
-export function ecrireMondeCircuit(dossier, circuit, data) {
+// monde-<c>.json (source de vérité) + monde-<c>.js (miroir file://, format texteMiroirJs).
+export function ecrireMondeCircuit(dossier, circuit, monde) {
   const c = Math.max(0, Math.min(999, parseInt(circuit) || 0));
   const base = 'monde-' + c;
-  fs.writeFileSync(path.join(dossier, base + '.json'), JSON.stringify(data, null, 2) + '\n');
-  fs.writeFileSync(
-    path.join(dossier, base + '.js'),
-    '// Généré automatiquement — données du circuit ' + c + ' (miroir de ' + base + '.json pour file://)\n' +
-    'window.__MONDE__ = ' + JSON.stringify(data) + ';\n'
-  );
+  fs.writeFileSync(path.join(dossier, base + '.json'), JSON.stringify(monde, null, 2) + '\n');
+  fs.writeFileSync(path.join(dossier, base + '.js'), texteMiroirJs(monde, c));
   return c;
+}
+
+// Traite le corps d'un POST /__save-monde : parse JSON, valide (structure + ids de la
+// bibliothèque + circuit), puis écrit monde-<c>.json + le miroir monde-<c>.js.
+// Retourne { status, corps } — testable sans HTTP.
+export function traiterSauvegardeMonde(dossier, body) {
+  let data;
+  try {
+    data = JSON.parse(body);
+  } catch (e) {
+    return { status: 400, corps: 'JSON invalide' };
+  }
+  const c = Math.max(0, Math.min(999, parseInt(data && data.circuit) || 0));
+  const v = validerMonde(data, c, { autoriserVide: true, idsValides: idsLibrary(dossier) });
+  if (!v.ok) return { status: 400, corps: 'Monde invalide : ' + v.erreurs.join(' ; ') };
+  ecrireMondeCircuit(dossier, c, v.monde);
+  return { status: 200, corps: JSON.stringify({ ok: true, circuit: c }) };
 }
 
 export function creerServeur({ dossier = DOSSIER } = {}) {
@@ -57,20 +79,15 @@ export function creerServeur({ dossier = DOSSIER } = {}) {
     }
 
     // Le jeu / l'éditeur exportent le monde en données ici :
-    // UN FICHIER PAR CIRCUIT — monde-<circuit>.json (source de vérité)
+    // UN FICHIER PAR CIRCUIT — monde-<circuit>.json (source de vérité, validé)
     // + monde-<circuit>.js (miroir lisible en file:// via <script>)
     if (req.method === 'POST' && url === '/__save-monde') {
       let body = '';
       req.on('data', c => { body += c; if (body.length > 5e6) req.destroy(); });
       req.on('end', () => {
-        try {
-          const data = JSON.parse(body);
-          const c = ecrireMondeCircuit(dossier, data.circuit, data);
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end('{"ok":true,"circuit":' + c + '}');
-        } catch (e) {
-          res.writeHead(400); res.end('JSON invalide');
-        }
+        const r = traiterSauvegardeMonde(dossier, body);
+        res.writeHead(r.status, { 'Content-Type': 'application/json' });
+        res.end(r.corps);
       });
       return;
     }
