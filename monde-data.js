@@ -13,11 +13,13 @@ function normaliserObjet(o) {
   if (!o || typeof o !== 'object' || Array.isArray(o)) return null;
   if (typeof o.id !== 'string' || !o.id) return null;
   const params = (o.params && typeof o.params === 'object' && !Array.isArray(o.params)) ? o.params : {};
+  // rotation : 0 par défaut, mais un NaN explicite reste NaN (détecté ensuite par validerMonde)
+  const rotation = (o.rotation === undefined || o.rotation === null) ? 0 : +o.rotation;
   return {
     id: o.id,
     x: +o.x,
     z: +o.z,
-    rotation: +o.rotation || 0,
+    rotation,
     params
   };
 }

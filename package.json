@@ -8,7 +8,7 @@
     "start": "node server.js",
     "build": "node build-standalone.js",
     "mondes": "node tools/generer-mondes.js",
-    "test": "node --test tests/",
-    "couverture": "node --test --experimental-test-coverage --test-coverage-include='*.js' --test-coverage-exclude='three.module.js' --test-coverage-exclude='monde-*.js' --test-coverage-exclude='carte-editeur.js' --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=80 tests/"
+    "test": "node --test \"tests/*.test.js\"",
+    "couverture": "node --test --experimental-test-coverage --test-coverage-include='*.js' --test-coverage-exclude='three.module.js' --test-coverage-exclude='monde-[0-9]*.js' --test-coverage-exclude='carte-editeur.js' --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=80 \"tests/*.test.js\""
   }
 }

@@ -46,6 +46,8 @@ export function traiterSauvegardeMonde(dossier, body) {
     return { status: 400, corps: 'JSON invalide' };
   }
   const c = Math.max(0, Math.min(999, parseInt(data && data.circuit) || 0));
+  // le circuit est clampé AVANT validation : data.circuit est normalisé sur la valeur clampée
+  if (data && typeof data === 'object' && !Array.isArray(data)) data.circuit = c;
   const v = validerMonde(data, c, { autoriserVide: true, idsValides: idsLibrary(dossier) });
   if (!v.ok) return { status: 400, corps: 'Monde invalide : ' + v.erreurs.join(' ; ') };
   ecrireMondeCircuit(dossier, c, v.monde);
@@ -102,6 +104,7 @@ export function creerServeur({ dossier = DOSSIER } = {}) {
 }
 
 const lanceDirectement = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+/* v8 ignore next 3 */
 if (lanceDirectement) {
   creerServeur().listen(8080, () => console.log('SERVEUR OK sur http://localhost:8080'));
 }

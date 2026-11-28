@@ -51,8 +51,9 @@ export function genererJeuHtml(dossier = DOSSIER) {
   // Remplacer les imports par les sources (fonction de remplacement : la source contient des '$')
   html = html.replace(/import \{ library \} from '\.\/objets\.js';/, () => objets);
   html = html.replace(/import \{ CIRCUITS \} from '\.\/circuits\.js';/, () => circuits);
-  html = html.replace(/import \{[\s\S]*?\} from '\.\/monde-data\.js';/, () => mondeData);
-  html = html.replace(/import \{[\s\S]*?\} from '\.\/monde-procedural\.js';/, () => mondeProcedural);
+  // [^}]* (et non [\s\S]*?) : ne consommation que la ligne d'import visée, pas les suivantes
+  html = html.replace(/import \{[^}]*\} from '\.\/monde-data\.js';/, () => mondeData);
+  html = html.replace(/import \{[^}]*\} from '\.\/monde-procedural\.js';/, () => mondeProcedural);
   if (html.includes("from 'three'")) { throw new Error('import non remplacé'); }
   if (html.includes("from './objets.js'")) { throw new Error('import objets non remplacé'); }
   if (html.includes("from './circuits.js'")) { throw new Error('import circuits non remplacé'); }
@@ -62,6 +63,7 @@ export function genererJeuHtml(dossier = DOSSIER) {
 }
 
 const lanceDirectement = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+/* v8 ignore next 4 */
 if (lanceDirectement) {
   const html = genererJeuHtml();
   fs.writeFileSync(path.join(DOSSIER, 'jeu.html'), html);
