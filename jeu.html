@@ -36,7 +36,8 @@
   #menu.hidden { display: none; }
 </style>
 <script>
-  // Données du monde : UN FICHIER PAR CIRCUIT (monde-<i>.js, miroir de monde-<i>.json).
+  // Données du monde : UN FICHIER PAR CIRCUIT — monde-<i>.json (source de vérité, lu par
+  // fetch dans le module) + monde-<i>.js (miroir file://, injecté ici dans le <head>).
   // Le circuit choisi est connu dès le <head> via localStorage('turboCircuit') :
   // on injecte dynamiquement la bonne balise <script> (chargée avant le module).
   (function () {
@@ -53705,6 +53706,129 @@ const CIRCUITS = [
   }
 ];
 
+// Données du monde PAR CIRCUIT — module partagé Node.js et navigateur (aucun DOM, aucun THREE).
+// Source unique de vérité pour :
+//  - la validation/normalisation des données (validerMonde, normaliserObjet, chargerMondeDepuisJson)
+//  - le format du miroir file:// monde-<i>.js (texteMiroirJs, utilisé par server.js et tools/)
+//  - la fusion génération procédurale + objets existants (fusionnerMondes)
+//  - la lecture des ids valides du catalogue (idsBibliothequeDepuisSource)
+
+const VERSION_MONDE = 1;
+
+// Normalise un objet placé : { id, x, z, rotation, params }.
+// Retourne null si l'objet est inutilisable (pas un objet, pas d'id string).
+function normaliserObjet(o) {
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return null;
+  if (typeof o.id !== 'string' || !o.id) return null;
+  const params = (o.params && typeof o.params === 'object' && !Array.isArray(o.params)) ? o.params : {};
+  return {
+    id: o.id,
+    x: +o.x,
+    z: +o.z,
+    rotation: +o.rotation || 0,
+    params
+  };
+}
+
+// Valide un monde complet pour un circuit donné.
+// opts.autoriserVide : autorise objets: [] (défaut false — un fichier circuit ne peut pas être vide)
+// opts.idsValides   : tableau d'ids autorisés (ex. clés de library) ; null = non vérifié
+// Retourne { ok, erreurs: [...], monde } où monde est la version normalisée (quand possible).
+function validerMonde(data, circuitIndex, opts = {}) {
+  const autoriserVide = !!opts.autoriserVide;
+  const idsValides = Array.isArray(opts.idsValides) ? opts.idsValides : null;
+  const erreurs = [];
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { ok: false, erreurs: ['monde : objet requis'], monde: null };
+  }
+  if (data.version !== VERSION_MONDE) {
+    erreurs.push('version : attendu ' + VERSION_MONDE + ', reçu ' + JSON.stringify(data.version));
+  }
+  if (data.circuit !== undefined && data.circuit !== circuitIndex) {
+    erreurs.push('circuit : attendu ' + circuitIndex + ', reçu ' + JSON.stringify(data.circuit));
+  }
+  if (!Array.isArray(data.objets)) {
+    return { ok: false, erreurs: erreurs.concat('objets : tableau requis'), monde: null };
+  }
+  if (!autoriserVide && data.objets.length === 0) {
+    erreurs.push('objets : un fichier de circuit ne peut pas être vide');
+  }
+  const objets = [];
+  data.objets.forEach((o, i) => {
+    const n = normaliserObjet(o);
+    if (!n) { erreurs.push('objets[' + i + '] : objet invalide'); return; }
+    if (!Number.isFinite(n.x) || !Number.isFinite(n.z)) {
+      erreurs.push('objets[' + i + '] (' + n.id + ') : x/z non finis');
+      return;
+    }
+    if (!Number.isFinite(n.rotation)) {
+      erreurs.push('objets[' + i + '] (' + n.id + ') : rotation non finie');
+      return;
+    }
+    if (idsValides && !idsValides.includes(n.id)) {
+      erreurs.push('objets[' + i + '] : id inconnu "' + n.id + '"');
+      return;
+    }
+    objets.push(n);
+  });
+  const monde = {
+    version: data.version === undefined ? VERSION_MONDE : data.version,
+    circuit: circuitIndex,
+    objets
+  };
+  return { ok: erreurs.length === 0, erreurs, monde };
+}
+
+// Parse + valide le contenu texte d'un fichier monde-<i>.json.
+// Lève une Error si le JSON est invalide ou si la validation échoue. Retourne le monde normalisé.
+function chargerMondeDepuisJson(texte, circuitIndex, opts = {}) {
+  let data;
+  try {
+    data = JSON.parse(texte);
+  } catch (e) {
+    throw new Error('JSON invalide pour le circuit ' + circuitIndex + ' : ' + e.message);
+  }
+  const v = validerMonde(data, circuitIndex, opts);
+  if (!v.ok) {
+    throw new Error('Monde du circuit ' + circuitIndex + ' invalide : ' + v.erreurs.join(' ; '));
+  }
+  return v.monde;
+}
+
+// Format unique du miroir monde-<i>.js (lu en file:// par jeu.html via <script>).
+function texteMiroirJs(monde, circuitIndex) {
+  return '// Généré automatiquement — données du circuit ' + circuitIndex +
+    ' (miroir de monde-' + circuitIndex + '.json pour file://)\n' +
+    'window.__MONDE__ = ' + JSON.stringify(monde) + ';\n';
+}
+
+// Fusionne la génération procédurale initiale avec un monde existant (édité) :
+// les objets existants sont conservés sauf s'ils sont en conflit (même id à moins
+// de `distance` unités d'un objet généré). Le résultat a toujours le circuit de `genere`.
+function fusionnerMondes(genere, existant, opts = {}) {
+  const distance = opts.distance !== undefined ? opts.distance : 1.5;
+  const objets = genere.objets.map(o => ({ id: o.id, x: o.x, z: o.z, rotation: o.rotation, params: { ...o.params } }));
+  const anciens = (existant && Array.isArray(existant.objets)) ? existant.objets : [];
+  for (const o of anciens) {
+    const n = normaliserObjet(o);
+    if (!n || !Number.isFinite(n.x) || !Number.isFinite(n.z)) continue;
+    const conflit = objets.some(g => g.id === n.id && Math.hypot(g.x - n.x, g.z - n.z) <= distance);
+    if (!conflit) objets.push(n);
+  }
+  return { version: VERSION_MONDE, circuit: genere.circuit, objets };
+}
+
+// Extrait les clés du catalogue `library` depuis le source d'objets.js
+// (évite d'importer objets.js en Node, qui a besoin de THREE via l'importmap).
+function idsBibliothequeDepuisSource(src) {
+  const ids = [];
+  const re = /^ {2}([A-Za-z0-9_-]+): \{/gm;
+  let m;
+  while ((m = re.exec(src)) !== null) ids.push(m[1]);
+  return ids;
+}
+
+
 
 /* ============================= SCÈNE ============================= */
 const container = document.getElementById('game');
@@ -53796,8 +53920,8 @@ const trackPoints = CIRCUITS[circuitIndex].points.map(([x, z]) => new THREE.Vect
 document.title = 'Turbo Circuit — ' + CIRCUITS[circuitIndex].name;
 
 const curve = new THREE.CatmullRomCurve3(trackPoints, true, 'catmullrom', 0.6);
-const SAMPLES = 600;
-const ROAD_HALF = 13;         // demi-largeur de la route (plus large)
+// SAMPLES et ROAD_HALF sont importés de monde-procedural.js : la génération des données
+// et le jeu utilisent les mêmes constantes (cohérence garantie).
 const samples = [];           // points centraux échantillonnés
 for (let i = 0; i < SAMPLES; i++) samples.push(curve.getPointAt(i / SAMPLES));
 
@@ -53815,11 +53939,10 @@ function nearestOnTrack(pos) {
    Couche dynamique (éditable via editeur.html) : tous les objets placés,
    sérialisés dans UN FICHIER PAR CIRCUIT : monde-<circuitIndex>.json à côté
    du jeu (miroir monde-<circuitIndex>.js chargé dans le <head> pour file://).
-   Le procédural ne tourne qu'à la création : si aucune donnée n'existe pour
-   le circuit choisi, on génère le monde une fois et on l'exporte. */
+   Le jeu LIT ce fichier pour le circuit choisi ; si aucune donnée valide n'existe,
+   on génère le monde procédural initial UNE FOIS (genererMonde, déterministe) et on
+   l'exporte dans ce fichier — qui ne reste donc jamais vide. */
 const monde = { version: 1, circuit: circuitIndex, objets: [] };
-let modeData = false;
-let dataMonde = null;
 
 // Pose un objet de la bibliothèque et l'enregistre dans les données du monde
 function poser(id, x, z, rotationDeg, params, enregistrer = true) {
@@ -53835,34 +53958,50 @@ function poser(id, x, z, rotationDeg, params, enregistrer = true) {
   return mesh;
 }
 
-// Cherche les données du monde DU CIRCUIT CHOISI :
-// 1) miroir monde-<circuit>.js (injecté dans le <head>), 2) localStorage par circuit,
-// 3) rétrocompatibilité avec l'ancien format global (un seul monde pour tous).
-function mondeExistant() {
-  if (window.__MONDE__ && Array.isArray(window.__MONDE__.objets) && window.__MONDE__.objets.length
-      && (window.__MONDE__.circuit === undefined || window.__MONDE__.circuit === circuitIndex)) return window.__MONDE__;
+// Charge les données du monde DU CIRCUIT CHOISI — le même fichier que celui de l'éditeur :
+// 1) fetch du fichier monde-<circuit>.json (source de vérité, validé par monde-data.js),
+// 2) miroir monde-<circuit>.js injecté dans le <head> (file:// via jeu.html),
+// 3) localStorage par circuit, 4) anciens formats globaux (rétrocompatibilité).
+// Retourne { monde, source } — monde vaut null si aucune donnée valide trouvée.
+async function chargerMonde() {
+  try {
+    const r = await fetch('./monde-' + circuitIndex + '.json');
+    if (r.ok) return { monde: chargerMondeDepuisJson(await r.text(), circuitIndex), source: 'json' };
+  } catch (e) { /* file:// ou serveur arrêté : on passe aux secours */ }
+  if (window.__MONDE__) {
+    const v = validerMonde(window.__MONDE__, circuitIndex, { autoriserVide: true });
+    if (v.ok && v.monde.objets.length) return { monde: v.monde, source: 'miroir' };
+  }
   try {
     const m = JSON.parse(localStorage.getItem('turbo-monde-' + circuitIndex) || 'null');
-    if (m && Array.isArray(m.objets) && m.objets.length) return m;
+    const v = validerMonde(m, circuitIndex, { autoriserVide: true });
+    if (v.ok && v.monde.objets.length) return { monde: v.monde, source: 'local' };
   } catch (e) {}
   // Rétrocompatibilité : ancien stockage global
   try {
     const m = JSON.parse(localStorage.getItem('turbo-monde') || 'null');
-    if (m && (m.circuit === undefined || m.circuit === circuitIndex) && Array.isArray(m.objets) && m.objets.length) return m;
+    const v = validerMonde(m, circuitIndex, { autoriserVide: true });
+    if (v.ok && v.monde.objets.length) return { monde: v.monde, source: 'local' };
   } catch (e) {}
   // Rétrocompatibilité avec l'ancien format de l'éditeur
-  if (window.__CARTE_EDITEUR__ && window.__CARTE_EDITEUR__.carte && window.__CARTE_EDITEUR__.carte.objets) {
-    return { version: 1, circuit: circuitIndex, objets: window.__CARTE_EDITEUR__.carte.objets };
+  if (window.__CARTE_EDITEUR__ && window.__CARTE_EDITEUR__.carte && Array.isArray(window.__CARTE_EDITEUR__.carte.objets)) {
+    const v = validerMonde({ version: 1, circuit: circuitIndex, objets: window.__CARTE_EDITEUR__.carte.objets }, circuitIndex, { autoriserVide: true });
+    if (v.ok && v.monde.objets.length) return { monde: v.monde, source: 'local' };
   }
   try {
     const c = JSON.parse(localStorage.getItem('turbo-circuit-carte') || 'null');
-    if (c && Array.isArray(c.objets) && c.objets.length) return { version: 1, circuit: circuitIndex, objets: c.objets };
+    const v = validerMonde({ version: 1, circuit: circuitIndex, objets: c && c.objets }, circuitIndex, { autoriserVide: true });
+    if (v.ok && v.monde.objets.length) return { monde: v.monde, source: 'local' };
   } catch (e) {}
-  return null;
+  return { monde: null, source: null };
 }
 
-dataMonde = mondeExistant();
-modeData = !!dataMonde;
+const chargeMonde = await chargerMonde();
+// Le monde affiché vient TOUJOURS des données : le fichier monde-<circuit>.json,
+// ou à défaut la génération procédurale initiale (déterministe, module partagé).
+const dataMonde = chargeMonde.monde || genererMonde(circuitIndex, CIRCUITS[circuitIndex].points);
+monde.objets = dataMonde.objets;
+if (chargeMonde.source !== 'json') sauvegarderMonde(); // exporte pour que le fichier existe et soit à jour
 
 // Exporte le monde (objets) en données : localStorage par circuit + monde-<circuit>.json via le serveur
 function sauvegarderMonde() {
@@ -54065,26 +54204,8 @@ function buildStand(frac, sideSign, rows, seats) {
 }
 // Tribunes supprimées à la demande du joueur (plus aucune buildStand dans le monde)
 
-// Barrières sur les extérieurs des virages serrés (fractions spécifiques au Mans)
-if (!modeData && circuitIndex === 0) {
-  const barrierSpots = [
-    [0.03, 0.16],  // virage est
-    [0.28, 0.42],  // virage nord-est
-    [0.55, 0.68],  // virage ouest
-    [0.80, 0.93]   // virage sud-ouest
-  ];
-  for (const [a, b] of barrierSpots) {
-    for (let k = 0; k < 4; k++) {
-      const frac = a + (b - a) * (k / 3);
-      const i = Math.floor(frac * SAMPLES);
-      const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
-      const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-      const rot = Math.atan2(t.x, t.z) * 180 / Math.PI;
-      poser('barrier', p.x + side.x * (ROAD_HALF + 1.8), p.z + side.z * (ROAD_HALF + 1.8), rot, {});
-      poser('barrier', p.x - side.x * (ROAD_HALF + 1.8), p.z - side.z * (ROAD_HALF + 1.8), rot, {});
-    }
-  }
-}
+// Barrières des virages serrés (Le Mans) : objets des données monde-<circuit>.json,
+// générés par monde-procedural.js et instanciés plus bas comme tout objet des données.
 
 // Sol (herbe)
 const ground = new THREE.Mesh(
@@ -54096,17 +54217,8 @@ ground.position.y = -0.05;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// Pads de boost
+// Pads de boost (objets 'boost' des données du monde, instanciés plus bas)
 const boostPads = [];
-if (!modeData) {
-  [0.25, 0.55, 0.8].forEach(frac => {
-    const i = Math.floor(frac * SAMPLES);
-    const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
-    const rot = Math.atan2(-t.x, -t.z) * 180 / Math.PI;
-    const m = poser('boost', p.x, p.z, rot, { width: ROAD_HALF * 2, length: 5 });
-    boostPads.push({ index: i, mesh: m, cooldown: 0 });
-  });
-}
 
 // Zone de stands : boxes individuels à DROITE de la piste, près de la ligne de départ
 const pitBoxes = []; // { pos: Vector3, heading, takenBy: player|null }
@@ -54202,18 +54314,8 @@ function questionTexture() {
   return new THREE.CanvasTexture(c);
 }
 const boxTex = questionTexture();
-if (!modeData) {
-  [0.18, 0.45, 0.72].forEach(frac => {
-    const i = Math.floor(frac * SAMPLES);
-    const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
-    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-    // Caisses sur la piste (style Mario Kart — elles n'ont pas de collision physique, on les traverse pour les ramasser)
-    [-ROAD_HALF * 0.5, 0, ROAD_HALF * 0.5].forEach(off => {
-      const m = poser('itembox', p.x + side.x * off, p.z + side.z * off, 0, {});
-      if (m) { m.position.y = 1.6; itemBoxes.push({ mesh: m, taken: false, respawn: 0 }); }
-    });
-  });
-}
+// Caisses bonus "?" sur la piste (style Mario Kart — objets 'itembox' des données du monde,
+// instanciées plus bas ; on les traverse pour les ramasser)
 // Carapace (projectile)
 function fireShell(p) {
   const m = new THREE.Mesh(
@@ -54226,12 +54328,7 @@ function fireShell(p) {
   shells.push({ mesh: m, dir: new THREE.Vector3(Math.sin(p.heading), 0, Math.cos(p.heading)), life: 4, owner: p });
 }
 
-// Portique de départ (objet data : 'arch')
-if (!modeData) {
-  const p0 = samples[0], t0 = curve.getTangentAt(0);
-  poser('arch', p0.x, p0.z, Math.atan2(-t0.x, -t0.z) * 180 / Math.PI,
-    { color: '#d8342c', width: (ROAD_HALF + 1.2) * 2 });
-}
+// Portique de départ : objet 'arch' des données du monde (instancié plus bas)
 
 // Bâtiment ACO des 24 Heures du Mans — tour de direction de course ronde (style photo)
 function acoGlassTexture() {
@@ -54338,14 +54435,8 @@ function buildACOBuilding(frac, sideSign) {
   b.rotation.y = Math.atan2(-t.z, t.x);
   scene.add(b);
 }
-// Tour ACO juste après la ligne de départ (uniquement sur Le Mans) — objet data : 'aco'
-if (!modeData && circuitIndex === 0) {
-  const i = Math.floor(0.05 * SAMPLES);
-  const p = samples[i], t = curve.getTangentAt(i / SAMPLES);
-  const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-  poser('aco', p.x + side.x * (ROAD_HALF + 25), p.z + side.z * (ROAD_HALF + 25),
-    Math.atan2(-t.z, t.x) * 180 / Math.PI, {});
-}
+// Tour ACO juste après la ligne de départ (uniquement sur Le Mans) :
+// objet 'aco' des données du monde (instancié plus bas)
 
 // Long bâtiment du paddock qui longe TOUTE la ligne de départ (style bâtiment des stands du Mans)
 function pitFrontTexture() {
@@ -54448,63 +54539,26 @@ function isFarFromTrack(x, z, minDist) {
   }
   return true;
 }
-if (!modeData) {
-  for (let i = 0; i < SAMPLES; i += 20) {
-    const p = samples[i];
-    const t = curve.getTangentAt(i / SAMPLES);
-    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-    const r1 = 22 + (i % 3) * 5, r2 = 22 + ((i + 7) % 3) * 5;
-    const x1 = p.x + side.x * r1, z1 = p.z + side.z * r1;
-    const x2 = p.x - side.x * r2, z2 = p.z - side.z * r2;
-    if (isFarFromTrack(x1, z1, ROAD_HALF + 6)) poser('tree', x1, z1, Math.random() * 360, {});
-    if (isFarFromTrack(x2, z2, ROAD_HALF + 6)) poser('tree', x2, z2, Math.random() * 360, {});
-  }
-  // Quelques arbres au centre (uniquement sur Le Mans, coordonnées fixes)
-  if (circuitIndex === 0) {
-    [[0, 20], [40, 60], [-60, 40], [30, -30], [-30, -20]].forEach(([x, z]) => poser('tree', x, z, 0, {}));
-  }
-}
+// Arbres de chaque côté de la piste et au centre (Le Mans) : objets 'tree' des données
+// du monde (instanciés plus bas)
 
-// Buissons et fleurs colorées
-if (!modeData) {
-  const flowerColors = ['#ff6f91', '#ffd54f', '#ba68c8', '#ffffff'];
-  for (let i = 0; i < SAMPLES; i += 7) {
-    const p = samples[i];
-    const t = curve.getTangentAt(i / SAMPLES);
-    const side = new THREE.Vector3(-t.z, 0, t.x).normalize();
-    const r = ROAD_HALF + 8 + (i % 5);
-    const s = i % 2 ? 1 : -1;
-    const bx = p.x + side.x * r * s, bz = p.z + side.z * r * s;
-    if (isFarFromTrack(bx, bz, ROAD_HALF + 5)) {
-      poser('bush', bx, bz, Math.random() * 360, { color: '#388e3c', scale: 1 + (i % 3) * 0.4 });
-      if (i % 14 === 0) {
-        const fx = p.x - side.x * (r + 1.5) * s, fz = p.z - side.z * (r + 1.5) * s;
-        if (isFarFromTrack(fx, fz, ROAD_HALF + 2)) {
-          poser('flower', fx, fz, 0, { color: flowerColors[i % 4], scale: 1 });
-        }
-      }
-    }
-  }
-}
+// Buissons et fleurs colorées le long de la piste : objets 'bush'/'flower' des données
+// du monde (instanciés plus bas)
 
-/* ---------- Monde chargé depuis les données (monde-<circuit>.json / éditeur de carte) ----------
-   Si des données existent, elles remplacent TOUT le décor procédural :
-   seuls les objets de la data sont instanciés (plus les éléments de gameplay
-   enregistrés ci-dessous : caisses et pads de boost). */
-if (modeData) {
+/* ---------- Monde instancié depuis les données (monde-<circuit>.json / génération initiale) ----------
+   Tous les objets du monde viennent des données du circuit (fichier JSON lu au chargement,
+   ou génération procédurale initiale exportée) : on instancie chaque objet, et on enregistre
+   au passage les éléments de gameplay (caisses et pads de boost). */
+{
   let places = 0;
   dataMonde.objets.forEach(o => {
     const mesh = poser(o.id, +o.x || 0, +o.z || 0, +o.rotation || 0, o.params || {}, false);
     if (!mesh) return;
     if (o.id === 'itembox') { mesh.position.y = 1.6; itemBoxes.push({ mesh, taken: false, respawn: 0 }); }
-    if (o.id === 'boost') boostPads.push({ index: 0, mesh, cooldown: 0 });
+    if (o.id === 'boost') boostPads.push({ index: nearestOnTrack(mesh.position).index, mesh, cooldown: 0 });
     places++;
   });
-  console.log('Monde chargé depuis les données :', places, 'objet(s)');
-} else {
-  // Première génération : le monde procédural devient de la data exportée
-  sauvegarderMonde();
-  console.log('Monde généré procéduralement et exporté :', monde.objets.length, 'objet(s)');
+  console.log('Monde du circuit', circuitIndex, 'instancié depuis les données :', places, 'objet(s)');
 }
 
 /* ============================= KARTS ============================= */
@@ -55150,20 +55204,18 @@ CIRCUITS.forEach((c, i) => {
   circuitBtnsEl.appendChild(btn);
 });
 
-// "Nouveau monde" : efface les données du circuit choisi → au rechargement, le jeu
-// régénère le monde procédural une fois et l'exporte (monde-<circuit>.json + .js)
+// "Nouveau monde" : régénère la génération procédurale initiale du circuit choisi
+// (déterministe, via le module partagé monde-procedural.js), l'exporte dans
+// monde-<circuit>.json + miroir .js, puis recharge la page.
 document.getElementById('btn-nouveau-monde').addEventListener('click', () => {
-  if (!confirm('Régénérer un nouveau monde pour ce circuit ? Les données de monde-<circuit>.json seront remplacées.')) return;
+  if (!confirm('Régénérer le monde procédural initial de ce circuit ? Les données de monde-<circuit>.json seront remplacées.')) return;
   localStorage.removeItem('turbo-monde-' + circuitIndex);
   localStorage.removeItem('turbo-monde');
   localStorage.removeItem('turbo-circuit-carte');
   localStorage.removeItem('turbo-circuit-pistes');
-  // remet le miroir monde-<circuit>.js à vide via le serveur (sinon file:// garderait l'ancien)
-  fetch('/__save-monde', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ version: 1, circuit: circuitIndex, objets: [] })
-  }).catch(() => {}).finally(() => setTimeout(() => location.reload(), 300));
+  monde.objets = genererMonde(circuitIndex, CIRCUITS[circuitIndex].points).objets;
+  sauvegarderMonde(); // localStorage + POST /__save-monde → monde-<circuit>.json + monde-<circuit>.js
+  setTimeout(() => location.reload(), 300);
 });
 
 function startRace(level) {
