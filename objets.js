@@ -380,6 +380,25 @@ export const library = {
       for (let r = 0; r < p.rows; r++) {
         const step = new THREE.Mesh(new THREE.BoxGeometry(8, 0.5, 1.3), mat);
         step.position.set(0, 0.25 + r * 0.5, -r * 1.3); g.add(step);
+        // spectateurs sur chaque rangée
+        for (let s = -3; s <= 3; s++) {
+          if (Math.random() < 0.25) continue; // quelques places vides
+          const color = new THREE.Color().setHSL(Math.random(), 0.7, 0.55);
+          const person = new THREE.Group();
+          const body = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.22, 0.26, 0.55, 6),
+            new THREE.MeshStandardMaterial({ color, roughness: 0.8 })
+          );
+          body.position.y = 0.28;
+          const head = new THREE.Mesh(
+            new THREE.SphereGeometry(0.17, 8, 6),
+            new THREE.MeshStandardMaterial({ color: 0xffd9b3, roughness: 0.7 })
+          );
+          head.position.y = 0.68;
+          person.add(body, head);
+          person.position.set(s * 1.1, 0.5 + r * 0.5, -r * 1.3);
+          g.add(person);
+        }
       }
       const roof = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.25, p.rows * 1.1 + 1.6),
         new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.6 }));

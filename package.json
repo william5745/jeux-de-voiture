@@ -1,0 +1,14 @@
+{
+  "name": "turbo-circuit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Turbo Circuit — jeu de course 3D (Three.js) avec éditeur de carte et données de monde en JSON, un fichier par circuit.",
+  "scripts": {
+    "start": "node server.js",
+    "build": "node build-standalone.js",
+    "mondes": "node tools/generer-mondes.js",
+    "test": "node --test tests/",
+    "couverture": "node --test --experimental-test-coverage --test-coverage-include='*.js' --test-coverage-exclude='three.module.js' --test-coverage-exclude='monde-*.js' --test-coverage-exclude='carte-editeur.js' --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=80 tests/"
+  }
+}

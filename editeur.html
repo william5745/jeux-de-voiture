@@ -127,7 +127,7 @@
       <button id="btn-import">📂 Importer un JSON</button>
       <button id="btn-clear">🗑️ Tout effacer</button>
     </div>
-    <p class="vide">Sauvegarde automatique en données : <b>monde.json</b> (+ miroir monde.js). Le jeu <b>jeu.html</b> (ouvert en file://) et index.html le lisent au chargement — fais juste Ctrl+F5 dessus après tes modifs. La piste affichée est en lecture seule.</p>
+    <p class="vide">Sauvegarde automatique en données : <b>un fichier par circuit</b> — <b>monde-&lt;circuit&gt;.json</b> (+ miroir monde-&lt;circuit&gt;.js). Le jeu <b>jeu.html</b> (ouvert en file://) et index.html lisent celui du circuit choisi au chargement — fais juste Ctrl+F5 dessus après tes modifs. La piste affichée est en lecture seule.</p>
     <input type="file" id="file-import" accept=".json,application/json" style="display:none">
     <h2>📍 Objets placés (<span id="count">0</span>)</h2>
     <div id="suppr-types"></div>
@@ -307,6 +307,7 @@ function construirePiste(i) {
   // Piste en lecture seule : aucun point déplaçable (couche statique du monde)
   majSolsCliquables();
   majBoutonsCircuits();
+  chargerMondeDuJeu(); // charge les objets enregistrés pour CE circuit (un fichier de données par circuit)
 }
 
 // Ligne pointillée centrale + ligne de départ (parties "route" du groupe, reconstruites à chaque modif)
@@ -764,12 +765,14 @@ function exporterDonnees() {
 
 function sauvegarder() {
   const data = exporterDonnees();
-  try { localStorage.setItem('turbo-monde', JSON.stringify(data)); } catch (e) { /* stockage indisponible */ }
+  // Un fichier de données PAR CIRCUIT : localStorage 'turbo-monde-<i>' + monde-<i>.json côté serveur
+  try { localStorage.setItem('turbo-monde-' + indexPiste, JSON.stringify(data)); } catch (e) { /* stockage indisponible */ }
   pousserVersJeu(data);
 }
 
-// Pousse le monde en données vers le jeu : le serveur écrit monde.json + le miroir
-// monde.js, lus au chargement par index.html et jeu.html (même ouvert en file://).
+// Pousse le monde en données vers le jeu : le serveur écrit monde-<circuit>.json
+// + le miroir monde-<circuit>.js, lus au chargement par index.html et jeu.html
+// (même ouvert en file://) pour le circuit correspondant uniquement.
 function pousserVersJeu(data) {
   try {
     fetch('/__save-monde', {
@@ -810,13 +813,13 @@ document.getElementById('btn-jeu').addEventListener('click', () => {
   window.open('index.html', '_blank');
 });
 document.getElementById('btn-reload-monde').addEventListener('click', () => {
-  chargerMondeDuJeu(); // recharge monde.json (dernier monde généré/édité)
+  chargerMondeDuJeu(); // recharge les données du circuit actuellement affiché
 });
 document.getElementById('btn-export').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(exporterDonnees(), null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'carte.json';
+  a.download = 'monde-circuit-' + indexPiste + '.json';
   a.click();
   URL.revokeObjectURL(a.href);
 });
@@ -835,7 +838,7 @@ document.getElementById('file-import').addEventListener('change', e => {
   e.target.value = '';
 });
 document.getElementById('btn-clear').addEventListener('click', () => {
-  if (places.length === 0 || confirm('Effacer tous les objets placés sur la carte ?')) {
+  if (places.length === 0 || confirm('Effacer tous les objets placés sur ce circuit (' + CIRCUITS[indexPiste].name + ') ?')) {
     chargerDonnees({ objets: [] });
   }
 });
@@ -853,31 +856,60 @@ window.addEventListener('resize', () => {
 });
 
 /* ---------- Démarrage : construire le circuit + charger le monde du jeu ---------- */
-construirePiste(0);
+construirePiste(0); // déclenche aussi chargerMondeDuJeu() pour le circuit 0
 construirProps();
 majListe();
-// Charge le monde du jeu : 1) monde.json (poussé par le serveur) 2) localStorage 3) ancien format
+
+// Charge les objets enregistrés POUR LE CIRCUIT actuellement affiché :
+// 1) monde-<i>.json (poussé par le serveur) 2) localStorage 'turbo-monde-<i>'
+// 3) migration de l'ancien format global (monde.json / turbo-monde) si le circuit correspond
+let chargementRev = 0;
 async function chargerMondeDuJeu() {
+  const rev = ++chargementRev; // ignore les réponses arrivées après un changement de circuit
+  const i = indexPiste;
   let data = null;
   try {
-    const r = await fetch('monde.json');
+    const r = await fetch('monde-' + i + '.json');
     if (r.ok) data = await r.json();
   } catch (e) {}
+  if (rev !== chargementRev) return;
+  if (!data || !Array.isArray(data.objets)) {
+    try { data = JSON.parse(localStorage.getItem('turbo-monde-' + i) || 'null'); } catch (e) {}
+  }
+  if (rev !== chargementRev) return;
+  // Migration : ancien format global (un seul monde pour tous les circuits)
   if (!data || !Array.isArray(data.objets) || !data.objets.length) {
-    try { data = JSON.parse(localStorage.getItem('turbo-monde') || 'null'); } catch (e) {}
+    try {
+      const r = await fetch('monde.json');
+      if (r.ok) {
+        const ancien = await r.json();
+        if (ancien && ancien.circuit === i && Array.isArray(ancien.objets) && ancien.objets.length) data = ancien;
+      }
+    } catch (e) {}
+  }
+  if (!data || !Array.isArray(data.objets) || !data.objets.length) {
+    try {
+      const m = JSON.parse(localStorage.getItem('turbo-monde') || 'null');
+      if (m && m.circuit === i && Array.isArray(m.objets) && m.objets.length) data = m;
+    } catch (e) {}
   }
   if (!data || !Array.isArray(data.objets) || !data.objets.length) {
     try {
       const c = JSON.parse(localStorage.getItem('turbo-circuit-carte') || 'null');
-      if (c && Array.isArray(c.objets)) data = { circuit: 0, objets: c.objets };
+      if (c && Array.isArray(c.objets)) data = { circuit: i, objets: c.objets };
     } catch (e) {}
   }
+  if (rev !== chargementRev) return;
   if (data && Array.isArray(data.objets) && data.objets.length) {
-    if (Number.isInteger(data.circuit) && CIRCUITS[data.circuit]) construirePiste(data.circuit);
     chargerDonnees(data);
+  } else {
+    // Aucune donnée pour ce circuit : on repart à vide, sans créer de fichier
+    places.forEach(p => scene.remove(p.mesh));
+    places = [];
+    selectionner(null);
+    majListe();
   }
 }
-chargerMondeDuJeu();
 </script>
 </body>
 </html>

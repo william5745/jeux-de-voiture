@@ -35,7 +35,17 @@
   .menu-btns button:hover { transform: scale(1.06); background: rgba(30, 136, 229, 1); }
   #menu.hidden { display: none; }
 </style>
-<script src="./monde.js"></script>
+<script>
+  // Données du monde : UN FICHIER PAR CIRCUIT (monde-<i>.js, miroir de monde-<i>.json).
+  // Le circuit choisi est connu dès le <head> via localStorage('turboCircuit') :
+  // on injecte dynamiquement la bonne balise <script> (chargée avant le module).
+  (function () {
+    var i = 0;
+    try { i = parseInt(localStorage.getItem('turboCircuit') || '0'); } catch (e) {}
+    if (isNaN(i) || i < 0) i = 0;
+    document.write('<script src="./monde-' + i + '.js"><\/script>');
+  })();
+</script>
 <script src="./carte-editeur.js"></script>
 <script type="importmap">
 { "imports": { "three": "./three.module.js" } }
@@ -185,9 +195,10 @@ function nearestOnTrack(pos) {
 /* ================= MONDE EN DONNÉES =================
    Couche statique (non éditable) : piste, bords, barrière invisible.
    Couche dynamique (éditable via editeur.html) : tous les objets placés,
-   sérialisés dans monde.json à côté du jeu (miroir monde.js pour file://).
-   Le procédural ne tourne qu'à la création : si aucune donnée n'existe,
-   on génère le monde une fois et on l'exporte. */
+   sérialisés dans UN FICHIER PAR CIRCUIT : monde-<circuitIndex>.json à côté
+   du jeu (miroir monde-<circuitIndex>.js chargé dans le <head> pour file://).
+   Le procédural ne tourne qu'à la création : si aucune donnée n'existe pour
+   le circuit choisi, on génère le monde une fois et on l'exporte. */
 const monde = { version: 1, circuit: circuitIndex, objets: [] };
 let modeData = false;
 let dataMonde = null;
@@ -206,12 +217,20 @@ function poser(id, x, z, rotationDeg, params, enregistrer = true) {
   return mesh;
 }
 
-// Cherche des données de monde existantes (miroir monde.js d'abord, puis localStorage)
+// Cherche les données du monde DU CIRCUIT CHOISI :
+// 1) miroir monde-<circuit>.js (injecté dans le <head>), 2) localStorage par circuit,
+// 3) rétrocompatibilité avec l'ancien format global (un seul monde pour tous).
 function mondeExistant() {
-  if (window.__MONDE__ && Array.isArray(window.__MONDE__.objets) && window.__MONDE__.objets.length) return window.__MONDE__;
+  if (window.__MONDE__ && Array.isArray(window.__MONDE__.objets) && window.__MONDE__.objets.length
+      && (window.__MONDE__.circuit === undefined || window.__MONDE__.circuit === circuitIndex)) return window.__MONDE__;
+  try {
+    const m = JSON.parse(localStorage.getItem('turbo-monde-' + circuitIndex) || 'null');
+    if (m && Array.isArray(m.objets) && m.objets.length) return m;
+  } catch (e) {}
+  // Rétrocompatibilité : ancien stockage global
   try {
     const m = JSON.parse(localStorage.getItem('turbo-monde') || 'null');
-    if (m && Array.isArray(m.objets) && m.objets.length) return m;
+    if (m && (m.circuit === undefined || m.circuit === circuitIndex) && Array.isArray(m.objets) && m.objets.length) return m;
   } catch (e) {}
   // Rétrocompatibilité avec l'ancien format de l'éditeur
   if (window.__CARTE_EDITEUR__ && window.__CARTE_EDITEUR__.carte && window.__CARTE_EDITEUR__.carte.objets) {
@@ -227,9 +246,9 @@ function mondeExistant() {
 dataMonde = mondeExistant();
 modeData = !!dataMonde;
 
-// Exporte le monde (objets) en données : localStorage + monde.json via le serveur
+// Exporte le monde (objets) en données : localStorage par circuit + monde-<circuit>.json via le serveur
 function sauvegarderMonde() {
-  try { localStorage.setItem('turbo-monde', JSON.stringify(monde)); } catch (e) {}
+  try { localStorage.setItem('turbo-monde-' + circuitIndex, JSON.stringify(monde)); } catch (e) {}
   try {
     fetch('/__save-monde', {
       method: 'POST',
@@ -850,7 +869,7 @@ if (!modeData) {
   }
 }
 
-/* ---------- Monde chargé depuis les données (monde.json / éditeur de carte) ----------
+/* ---------- Monde chargé depuis les données (monde-<circuit>.json / éditeur de carte) ----------
    Si des données existent, elles remplacent TOUT le décor procédural :
    seuls les objets de la data sont instanciés (plus les éléments de gameplay
    enregistrés ci-dessous : caisses et pads de boost). */
@@ -1513,14 +1532,15 @@ CIRCUITS.forEach((c, i) => {
   circuitBtnsEl.appendChild(btn);
 });
 
-// "Nouveau monde" : efface les données de monde → au rechargement, le jeu régénère
-// le monde procédural une fois et l'exporte (monde.json + monde.js)
+// "Nouveau monde" : efface les données du circuit choisi → au rechargement, le jeu
+// régénère le monde procédural une fois et l'exporte (monde-<circuit>.json + .js)
 document.getElementById('btn-nouveau-monde').addEventListener('click', () => {
-  if (!confirm('Régénérer un nouveau monde ? Le monde actuel (monde.json) sera remplacé.')) return;
+  if (!confirm('Régénérer un nouveau monde pour ce circuit ? Les données de monde-<circuit>.json seront remplacées.')) return;
+  localStorage.removeItem('turbo-monde-' + circuitIndex);
   localStorage.removeItem('turbo-monde');
   localStorage.removeItem('turbo-circuit-carte');
   localStorage.removeItem('turbo-circuit-pistes');
-  // remet le miroir monde.js à vide via le serveur (sinon file:// garderait l'ancien)
+  // remet le miroir monde-<circuit>.js à vide via le serveur (sinon file:// garderait l'ancien)
   fetch('/__save-monde', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

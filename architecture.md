@@ -15,9 +15,11 @@ jeux de voiture/
 ├── circuit.html        ← page de test minimale du circuit
 ├── circuits.js         ← les 4 tracés de circuits (source unique, partagé)
 ├── objets.js           ← le catalogue d'objets 3D (source unique, partagé)
-├── carte-editeur.js    ← SAUVEGARDE de l'éditeur (généré auto, ne pas modifier)
+├── carte-editeur.js    ← SAUVEGARDE des tracés de l'éditeur (généré auto, ne pas modifier)
+├── monde-<i>.json      ← données du monde PAR CIRCUIT (générés auto, ne pas modifier)
+├── monde-<i>.js        ← miroirs de monde-<i>.json pour jeu.html en file:// (générés auto)
 ├── three.module.js     ← moteur Three.js (ne jamais toucher)
-├── server.js           ← serveur statique local (port 8080) + endpoint de sauvegarde
+├── server.js           ← serveur statique local (port 8080) + endpoints de sauvegarde
 ├── build-standalone.js ← script qui génère jeu.html à partir de index.html
 └── music/              ← musiques du jeu
 ```
@@ -67,7 +69,21 @@ La sauvegarde passe par **deux canaux** :
 1. `sauvegarder()` écrit la carte dans le `localStorage` (fonctionne quand le jeu est servi par le même serveur).
 2. `pousserVersJeu()` envoie en plus un **POST au serveur** (`server.js`, route `/__save-carte`) qui **réécrit le fichier `carte-editeur.js`** avec `window.__CARTE_EDITEUR__ = {...}`. Ainsi, `jeu.html` ouvert directement en `file://` (qui n'a pas accès au localStorage de localhost) lit ce fichier via une balise `<script>` classique.
 
-Au chargement, **`index.html`** fait l'inverse : il lit `window.__CARTE_EDITEUR__.carte` (ou le localStorage), et pour chaque objet placé, retrouve `library[id]`, appelle `build(params)`, positionne le mesh à `(x, z)` avec sa rotation. Idem pour les tracés modifiés (`pistes`) qui remplacent les points par défaut du circuit choisi.
+### Un fichier de données par circuit
+
+Le décor placé dans l'éditeur est sauvegardé **par circuit**, jamais en global :
+
+```
+éditeur.html ── localStorage 'turbo-monde-<i>' ──→ index.html (même origine)
+     │
+     └─ POST /__save-monde {circuit: i, objets: [...]} ──→ server.js
+                                                          ├─→ monde-<i>.json  (source de vérité)
+                                                          └─→ monde-<i>.js    (miroir file://)
+```
+
+- `index.html` injecte dans son `<head>` la balise `<script src="./monde-<i>.js">` correspondant au circuit choisi (`localStorage('turboCircuit')`), puis ne lit que ce fichier (ou `turbo-monde-<i>`) : **chaque circuit a ses propres objets**, une modification dans l'éditeur n'affecte plus les autres.
+- `editeur.html` sauvegarde dans `turbo-monde-<i>` + `monde-<i>.json`, et quand on change de circuit dans la barre, il charge le fichier de ce circuit.
+- Au chargement, **`index.html`** lit `window.__MONDE__` (ou le localStorage par circuit), et pour chaque objet placé, retrouve `library[id]`, appelle `build(params)`, positionne le mesh à `(x, z)` avec sa rotation. Idem pour les tracés modifiés (`pistes` dans `carte-editeur.js`) qui remplacent les points par défaut du circuit choisi. Si aucune donnée n'existe pour le circuit, le monde procédural est généré une fois puis exporté vers `monde-<i>.json`.
 
 ## Comment le jeu fonctionne (index.html, ~1700 lignes)
 
@@ -94,8 +110,9 @@ objets.js (library) ──────┼─→ index.html / jeu.html  (monde 3D
                           ├─→ editeur.html            (édition)
                           └─→ bibliotheque.html       (visualisation)
 
-editeur.html ── localStorage ──→ index.html
-    └─ POST /__save-carte → server.js → carte-editeur.js → jeu.html (file://)
+editeur.html ── localStorage 'turbo-monde-<i>' ──→ index.html
+    └─ POST /__save-monde → server.js → monde-<i>.json + monde-<i>.js → jeu.html (file://)
+    └─ POST /__save-carte → server.js → carte-editeur.js (tracés) → jeu.html (file://)
 ```
 
-En résumé : **les données (circuits, objets) vivent dans des fichiers JS partagés**, le code du jeu est dans `index.html`, et l'éditeur communique avec le jeu via `localStorage` + le fichier `carte-editeur.js` réécrit par le serveur.
+En résumé : **les tracés et le catalogue d'objets vivent dans des fichiers JS partagés**, le code du jeu est dans `index.html`, et l'éditeur écrit **un fichier de données par circuit** (`monde-<i>.json`) que le jeu relit pour le circuit choisi.
