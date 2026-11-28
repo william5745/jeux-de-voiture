@@ -790,16 +790,7 @@ function addTree(x, z) {
   leaves.position.set(x, 5, z); leaves.castShadow = true;
   scene.add(trunk, leaves);
 }
-// Vérifie qu'une position (x,z) est à au moins minDist de TOUS les points de la piste
-// (évite qu'un arbre placé "à côté" d'un virage serré se retrouve sur la route de l'autre côté)
-function isFarFromTrack(x, z, minDist) {
-  const minD2 = minDist * minDist;
-  for (let i = 0; i < SAMPLES; i += 3) { // étape de 3 pour alléger le calcul
-    const dx = samples[i].x - x, dz = samples[i].z - z;
-    if (dx * dx + dz * dz < minD2) return false;
-  }
-  return true;
-}
+// isFarFromTrack() vit dans monde-procedural.js (utilisé par la génération des données)
 // Arbres de chaque côté de la piste et au centre (Le Mans) : objets 'tree' des données
 // du monde (instanciés plus bas)
 
