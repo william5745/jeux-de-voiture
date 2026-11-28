@@ -3,6 +3,1819 @@
   "circuit": 2,
   "objets": [
     {
+      "id": "arch",
+      "x": 0,
+      "z": -110,
+      "rotation": -91.06,
+      "params": {
+        "color": "#d8342c",
+        "width": 28.4
+      }
+    },
+    {
+      "id": "boost",
+      "x": 160.61,
+      "z": 0.11,
+      "rotation": -178.07,
+      "params": {
+        "width": 26,
+        "length": 5
+      }
+    },
+    {
+      "id": "boost",
+      "x": -41.23,
+      "z": 109.75,
+      "rotation": 78.62,
+      "params": {
+        "width": 26,
+        "length": 5
+      }
+    },
+    {
+      "id": "boost",
+      "x": -155.46,
+      "z": -48.86,
+      "rotation": -16.99,
+      "params": {
+        "width": 26,
+        "length": 5
+      }
+    },
+    {
+      "id": "itembox",
+      "x": 152.26,
+      "z": -64.31,
+      "rotation": 0,
+      "params": {}
+    },
+    {
+      "id": "itembox",
+      "x": 146.77,
+      "z": -60.82,
+      "rotation": 0,
+      "params": {}
+    },
+    {
+      "id": "itembox",
+      "x": 141.29,
+      "z": -57.34,
+      "rotation": 0,
+      "params": {}
+    },
+    {
+      "id": "itembox",
+      "x": 49.05,
+      "z": 120.93,
+      "rotation": 0,
+      "params": {}
+    },
+    {
+      "id": "itembox",
+      "x": 48.64,
+      "z": 114.45,
+      "rotation": 0,
+      "params": {}
+    },
+    {
+      "id": "itembox",
+      "x": 48.23,
+      "z": 107.96,
+      "rotation": 0,
+      "params": {}
+    },
+    {
+      "id": "itembox",
+      "x": -163.04,
+      "z": 24.45,
+      "rotation": 0,
+      "params": {}
+    },
+    {
+      "id": "itembox",
+      "x": -156.81,
+      "z": 22.6,
+      "rotation": 0,
+      "params": {}
+    },
+    {
+      "id": "itembox",
+      "x": -150.58,
+      "z": 20.75,
+      "rotation": 0,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -0.41,
+      "z": -88,
+      "rotation": 162.04,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 0.5,
+      "z": -137,
+      "rotation": 238.82,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 30.62,
+      "z": -78.24,
+      "rotation": 153.85,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 29.78,
+      "z": -132.23,
+      "rotation": 158.38,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 56.78,
+      "z": -82.29,
+      "rotation": 100.95,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 64.15,
+      "z": -140.82,
+      "rotation": 242.19,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 82.7,
+      "z": -81.2,
+      "rotation": 227.64,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 97.71,
+      "z": -127.85,
+      "rotation": 222.72,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 100.34,
+      "z": -62.84,
+      "rotation": 318.21,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 128.41,
+      "z": -108.97,
+      "rotation": 55.21,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 119.01,
+      "z": -53.01,
+      "rotation": 327.12,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 163.94,
+      "z": -91.24,
+      "rotation": 122.34,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 133.51,
+      "z": -37.74,
+      "rotation": 358.18,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 180.12,
+      "z": -52.86,
+      "rotation": 249.84,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 127.7,
+      "z": -12.08,
+      "rotation": 314.62,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 181.49,
+      "z": -16.9,
+      "rotation": 294.37,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 133.35,
+      "z": 12.52,
+      "rotation": 218.41,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 192.08,
+      "z": 18.23,
+      "rotation": 227.64,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 132.23,
+      "z": 35.7,
+      "rotation": 282.89,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 177.51,
+      "z": 54.44,
+      "rotation": 170,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 111.89,
+      "z": 54.64,
+      "rotation": 312.44,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 158.16,
+      "z": 82.49,
+      "rotation": 323.05,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 103.11,
+      "z": 72.17,
+      "rotation": 6.2,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 139.04,
+      "z": 118.96,
+      "rotation": 14.21,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 86.02,
+      "z": 87.03,
+      "rotation": 33.04,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 101.89,
+      "z": 133.39,
+      "rotation": 308.5,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 60.88,
+      "z": 81.5,
+      "rotation": 290.69,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 65.55,
+      "z": 135.3,
+      "rotation": 63.15,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 32.1,
+      "z": 88.43,
+      "rotation": 342.4,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 35.29,
+      "z": 147.34,
+      "rotation": 283.62,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 4.49,
+      "z": 93.71,
+      "rotation": 191.51,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": 2.27,
+      "z": 142.66,
+      "rotation": 274.96,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -21.25,
+      "z": 80.9,
+      "rotation": 355.23,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -29.96,
+      "z": 134.2,
+      "rotation": 298.99,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -49.92,
+      "z": 80.29,
+      "rotation": 16.54,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -63.15,
+      "z": 137.79,
+      "rotation": 347.46,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -76.68,
+      "z": 77.55,
+      "rotation": 274.8,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -94.71,
+      "z": 123.11,
+      "rotation": 148.38,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -94.08,
+      "z": 57.2,
+      "rotation": 271.67,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -123.4,
+      "z": 102.54,
+      "rotation": 258.71,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -114.22,
+      "z": 47.3,
+      "rotation": 123.8,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -158.74,
+      "z": 86.01,
+      "rotation": 70.81,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -130.37,
+      "z": 30.05,
+      "rotation": 185.05,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -174.7,
+      "z": 50.94,
+      "rotation": 19.03,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -127.88,
+      "z": 5.84,
+      "rotation": 258.1,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -181.21,
+      "z": 14.33,
+      "rotation": 192.42,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -133.17,
+      "z": -16.9,
+      "rotation": 110.16,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -191.96,
+      "z": -21.8,
+      "rotation": 208.52,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -134.42,
+      "z": -42.43,
+      "rotation": 321.45,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -181.28,
+      "z": -56.75,
+      "rotation": 294.25,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -116.56,
+      "z": -53.21,
+      "rotation": 73.81,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -156.7,
+      "z": -89.33,
+      "rotation": 119.94,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -103.59,
+      "z": -70.62,
+      "rotation": 333.96,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -133.66,
+      "z": -121.39,
+      "rotation": 165.71,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -83.42,
+      "z": -84.29,
+      "rotation": 242.34,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -97.28,
+      "z": -131.29,
+      "rotation": 37.56,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -57.32,
+      "z": -79.48,
+      "rotation": 163.8,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -62.09,
+      "z": -133.27,
+      "rotation": 86.63,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -31.54,
+      "z": -84.42,
+      "rotation": 95.09,
+      "params": {}
+    },
+    {
+      "id": "tree",
+      "x": -28.38,
+      "z": -143.33,
+      "rotation": 199.48,
+      "params": {}
+    },
+    {
+      "id": "bush",
+      "x": 0.39,
+      "z": -131,
+      "rotation": 66.24,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": -0.42,
+      "z": -87.5,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 10.68,
+      "z": -86.94,
+      "rotation": 237.57,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "bush",
+      "x": 20.64,
+      "z": -135.07,
+      "rotation": 19.7,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "flower",
+      "x": 21.58,
+      "z": -83.58,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 31.92,
+      "z": -88.26,
+      "rotation": 22.55,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 42.55,
+      "z": -134.26,
+      "rotation": 126.08,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "flower",
+      "x": 41.73,
+      "z": -84.77,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 51.15,
+      "z": -88.87,
+      "rotation": 356.26,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "bush",
+      "x": 66.53,
+      "z": -131.41,
+      "rotation": 300.84,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": 59.53,
+      "z": -84.43,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 67.81,
+      "z": -82.34,
+      "rotation": 266.63,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "bush",
+      "x": 89.95,
+      "z": -125.01,
+      "rotation": 71.1,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "flower",
+      "x": 76.97,
+      "z": -81.4,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 85.88,
+      "z": -78.04,
+      "rotation": 349.16,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 111.75,
+      "z": -116.31,
+      "rotation": 242.26,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "flower",
+      "x": 94.8,
+      "z": -76.25,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 102.09,
+      "z": -72.21,
+      "rotation": 137.34,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "bush",
+      "x": 136.46,
+      "z": -107.26,
+      "rotation": 67.32,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": 106.68,
+      "z": -65.25,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 115.39,
+      "z": -63.99,
+      "rotation": 138.81,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "bush",
+      "x": 155.5,
+      "z": -88.76,
+      "rotation": 110.14,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "flower",
+      "x": 118.59,
+      "z": -55.77,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 127.19,
+      "z": -52.31,
+      "rotation": 315.68,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 170.16,
+      "z": -66.3,
+      "rotation": 305.75,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "flower",
+      "x": 128.09,
+      "z": -44.24,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 130.34,
+      "z": -37.77,
+      "rotation": 45.99,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "bush",
+      "x": 178.27,
+      "z": -40.36,
+      "rotation": 5.72,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": 133.76,
+      "z": -30.94,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 134.66,
+      "z": -22.37,
+      "rotation": 82.98,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "bush",
+      "x": 180.49,
+      "z": -16.81,
+      "rotation": 195.95,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "flower",
+      "x": 137.17,
+      "z": -12.93,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 137.44,
+      "z": -3.04,
+      "rotation": 129.18,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 185.69,
+      "z": 6.36,
+      "rotation": 93.6,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "flower",
+      "x": 134.19,
+      "z": 5.85,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 138.21,
+      "z": 14.14,
+      "rotation": 94.65,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "bush",
+      "x": 181.6,
+      "z": 32.55,
+      "rotation": 297.29,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": 133.44,
+      "z": 21.09,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 135.45,
+      "z": 30.12,
+      "rotation": 315.67,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "bush",
+      "x": 172.48,
+      "z": 56.04,
+      "rotation": 31.84,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "flower",
+      "x": 128.92,
+      "z": 37.12,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 124.4,
+      "z": 45.8,
+      "rotation": 330.39,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 161.65,
+      "z": 76.34,
+      "rotation": 249.43,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "flower",
+      "x": 121.58,
+      "z": 54.78,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 116.92,
+      "z": 61.65,
+      "rotation": 101.77,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "bush",
+      "x": 146.33,
+      "z": 97.15,
+      "rotation": 315.88,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": 113.58,
+      "z": 68.52,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 108.04,
+      "z": 73.31,
+      "rotation": 269.49,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "bush",
+      "x": 128.5,
+      "z": 117.9,
+      "rotation": 348.59,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "flower",
+      "x": 99.97,
+      "z": 75.02,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 95.34,
+      "z": 82.99,
+      "rotation": 225.79,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 104.54,
+      "z": 129.24,
+      "rotation": 237.44,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "flower",
+      "x": 86.87,
+      "z": 83,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 80.83,
+      "z": 89.6,
+      "rotation": 306.52,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "bush",
+      "x": 79.04,
+      "z": 134.75,
+      "rotation": 125.06,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": 71.94,
+      "z": 87.79,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 62.85,
+      "z": 88.35,
+      "rotation": 313.24,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "bush",
+      "x": 56.12,
+      "z": 136.01,
+      "rotation": 75.08,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "flower",
+      "x": 53.08,
+      "z": 90.61,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 42.61,
+      "z": 90.78,
+      "rotation": 238.71,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 34.7,
+      "z": 136.36,
+      "rotation": 7.07,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "flower",
+      "x": 32.35,
+      "z": 92.92,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 22.42,
+      "z": 92.83,
+      "rotation": 49.61,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "bush",
+      "x": 12.29,
+      "z": 140.92,
+      "rotation": 25.97,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": 12.75,
+      "z": 89.43,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": 3.12,
+      "z": 93.64,
+      "rotation": 324.07,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "bush",
+      "x": -10.81,
+      "z": 138.72,
+      "rotation": 30.69,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "flower",
+      "x": -6.07,
+      "z": 89.45,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -16.11,
+      "z": 92.8,
+      "rotation": 221.75,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -33.29,
+      "z": 134.65,
+      "rotation": 117.48,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "flower",
+      "x": -25.22,
+      "z": 87.84,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -34.85,
+      "z": 85.53,
+      "rotation": 125.78,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "bush",
+      "x": -54.74,
+      "z": 129.42,
+      "rotation": 312.77,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": -45.16,
+      "z": 84.94,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -54.67,
+      "z": 82.25,
+      "rotation": 229,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "bush",
+      "x": -76.43,
+      "z": 123.01,
+      "rotation": 66.37,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "flower",
+      "x": -64.24,
+      "z": 81.25,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -72.75,
+      "z": 77.97,
+      "rotation": 234.04,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -100.52,
+      "z": 118.5,
+      "rotation": 36.95,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "flower",
+      "x": -79.52,
+      "z": 71.48,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -89.33,
+      "z": 71.66,
+      "rotation": 346.62,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "bush",
+      "x": -121.61,
+      "z": 106.05,
+      "rotation": 206.48,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": -95.34,
+      "z": 64.1,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -105.55,
+      "z": 62.73,
+      "rotation": 120.62,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "bush",
+      "x": -140.93,
+      "z": 90.96,
+      "rotation": 153.96,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "flower",
+      "x": -110.15,
+      "z": 54.78,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -115.07,
+      "z": 49.36,
+      "rotation": 224.61,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -158.27,
+      "z": 70.25,
+      "rotation": 244.02,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "flower",
+      "x": -120.66,
+      "z": 44.64,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -124.43,
+      "z": 37.41,
+      "rotation": 175.29,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "bush",
+      "x": -169.27,
+      "z": 48.38,
+      "rotation": 289.64,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": -129.92,
+      "z": 29.83,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -132.88,
+      "z": 21.62,
+      "rotation": 318.54,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "bush",
+      "x": -181.8,
+      "z": 26.05,
+      "rotation": 74.55,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "flower",
+      "x": -131.99,
+      "z": 12.96,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -137.93,
+      "z": 6.28,
+      "rotation": 228.3,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -184.61,
+      "z": -0.24,
+      "rotation": 352.87,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "flower",
+      "x": -135.14,
+      "z": -2.02,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -139.58,
+      "z": -10.73,
+      "rotation": 267.76,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "bush",
+      "x": -182.72,
+      "z": -24.24,
+      "rotation": 107.77,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": -135.41,
+      "z": -19.99,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -133.91,
+      "z": -29.51,
+      "rotation": 24.76,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "bush",
+      "x": -178.46,
+      "z": -47.77,
+      "rotation": 259.83,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "flower",
+      "x": -134.02,
+      "z": -37.99,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -131.59,
+      "z": -44.51,
+      "rotation": 282.99,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -167.4,
+      "z": -73.36,
+      "rotation": 83.79,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "flower",
+      "x": -130.08,
+      "z": -51.01,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -125.48,
+      "z": -56.64,
+      "rotation": 18.56,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "bush",
+      "x": -153.95,
+      "z": -96.61,
+      "rotation": 245.98,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": -117.4,
+      "z": -60.33,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -114.49,
+      "z": -69.08,
+      "rotation": 76.4,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "bush",
+      "x": -132.84,
+      "z": -112.5,
+      "rotation": 341.02,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "flower",
+      "x": -106.19,
+      "z": -70.79,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -101.5,
+      "z": -78.56,
+      "rotation": 69.53,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -109.21,
+      "z": -123.09,
+      "rotation": 97.46,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "flower",
+      "x": -92.38,
+      "z": -78.67,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -83.83,
+      "z": -81.03,
+      "rotation": 134.1,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "bush",
+      "x": -86.33,
+      "z": -129.09,
+      "rotation": 330.92,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": -75.15,
+      "z": -84.99,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -66.49,
+      "z": -86.34,
+      "rotation": 357.84,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "bush",
+      "x": -62,
+      "z": -132.27,
+      "rotation": 264.38,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "flower",
+      "x": -58.16,
+      "z": -88.94,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -49.25,
+      "z": -88.89,
+      "rotation": 276.66,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -38.28,
+      "z": -136.77,
+      "rotation": 11.52,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
+      "id": "flower",
+      "x": -39.97,
+      "z": -85.3,
+      "rotation": 0,
+      "params": {
+        "color": "#ba68c8",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -29.79,
+      "z": -89.33,
+      "rotation": 213.11,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.8
+      }
+    },
+    {
+      "id": "bush",
+      "x": -16.76,
+      "z": -134.67,
+      "rotation": 205.65,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1
+      }
+    },
+    {
+      "id": "flower",
+      "x": -19.44,
+      "z": -85.24,
+      "rotation": 0,
+      "params": {
+        "color": "#ff6f91",
+        "scale": 1
+      }
+    },
+    {
+      "id": "bush",
+      "x": -8.32,
+      "z": -89.23,
+      "rotation": 206.39,
+      "params": {
+        "color": "#388e3c",
+        "scale": 1.4
+      }
+    },
+    {
       "id": "pit",
       "x": 8,
       "z": -135,
