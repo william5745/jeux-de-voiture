@@ -52,38 +52,35 @@ Il y a ~20 objets (kart, arbre, barrière, caisse bonus, portique, bâtiment ACO
 
 **`editeur.html`** permet de :
 
-- choisir un circuit, **déplacer les points du tracé** (poignées sur la courbe) → sauvegarde dans `localStorage('turbo-circuit-pistes')` ;
+- choisir un circuit (barre de boutons), **voir le tracé** (lecture seule) ; les tracés modifiés sont écrits dans `carte-editeur.js` via `POST /__save-carte` ;
 - **placer des objets** de la bibliothèque en cliquant sur la carte (position x/z + rotation + paramètres éditables dans un panneau) ;
 - supprimer/pivoter les objets placés.
 
 ### Le pont éditeur → jeu
 
-La sauvegarde passe par **deux canaux** :
+**Jouer ne demande aucun serveur** (hébergement statique GitHub Pages — `.nojekyll` — ou `file://` pour `jeu.html`) : le jeu ne lit que des **fichiers commités** et n'utilise **jamais `localStorage`**. **Éditer demande le serveur local** (`node server.js`) : la seule écriture possible est un POST au serveur.
 
 ```
-éditeur.html ── localStorage 'turbo-circuit-carte' ──→ index.html (même origine, localhost:8080)
-     │
-     └─ POST /__save-carte ──→ server.js ──→ écrit carte-editeur.js ──→ lu par jeu.html (file://)
-```
-
-1. `sauvegarder()` écrit la carte dans le `localStorage` (fonctionne quand le jeu est servi par le même serveur).
-2. `pousserVersJeu()` envoie en plus un **POST au serveur** (`server.js`, route `/__save-carte`) qui **réécrit le fichier `carte-editeur.js`** avec `window.__CARTE_EDITEUR__ = {...}`. Ainsi, `jeu.html` ouvert directement en `file://` (qui n'a pas accès au localStorage de localhost) lit ce fichier via une balise `<script>` classique.
-
-### Un fichier de données par circuit
-
-Le décor placé dans l'éditeur est sauvegardé **par circuit**, jamais en global :
-
-```
-éditeur.html ── localStorage 'turbo-monde-<i>' ──→ index.html (même origine)
-     │
+éditeur.html ── POST /__save-carte ──→ server.js ──→ réécrit carte-editeur.js (commité)
+     │                                                  ↑ lu par index.html / jeu.html (file://)
      └─ POST /__save-monde {circuit: i, objets: [...]} ──→ server.js
-                                                          ├─→ monde-<i>.json  (source de vérité)
-                                                          └─→ monde-<i>.js    (miroir file://)
+                                                          ├─→ monde-<i>.json  (source de vérité, commité)
+                                                          └─→ monde-<i>.js    (miroir commité, <script>)
 ```
 
-- `index.html` injecte dans son `<head>` la balise `<script src="./monde-<i>.js">` correspondant au circuit choisi (`localStorage('turboCircuit')`), puis ne lit que ce fichier (ou `turbo-monde-<i>`) : **chaque circuit a ses propres objets**, une modification dans l'éditeur n'affecte plus les autres.
-- `editeur.html` sauvegarde dans `turbo-monde-<i>` + `monde-<i>.json`, et quand on change de circuit dans la barre, il charge le fichier de ce circuit.
-- Au chargement, **`index.html`** lit `window.__MONDE__` (ou le localStorage par circuit), et pour chaque objet placé, retrouve `library[id]`, appelle `build(params)`, positionne le mesh à `(x, z)` avec sa rotation. Idem pour les tracés modifiés (`pistes` dans `carte-editeur.js`) qui remplacent les points par défaut du circuit choisi. Si aucune donnée n'existe pour le circuit, le monde procédural est généré une fois puis exporté vers `monde-<i>.json`.
+1. `sauvegarder()` envoie un **POST au serveur** (`server.js`, route `/__save-monde` ou `/__save-carte`) qui **réécrit le fichier de données** correspondant (validé par `monde-data.js`, 400 si invalide).
+2. Sans serveur, l'éditeur affiche une erreur : il charge les données UNIQUEMENT par `fetch('monde-<i>.json')`.
+
+### Un fichier de données par circuit (commité, jamais vide)
+
+Le décor de chaque circuit vit dans **un fichier commité par circuit** — monde-<i>.json (source de vérité) + monde-<i>.js (miroir) — rempli à l'initialisation par la génération procédurale (npm run mondes) :
+
+
+
+- index.html injecte dans son <head> la balise <script src="./monde-<i>.js"> correspondant au paramètre ?circuit=<i>, puis lit les données (fetch du .json en priorité, miroir .js en secours — tous deux commités, donc servis en statique) : **chaque circuit a ses propres objets**.
+- editeur.html, quand on change de circuit dans la barre, recharge monde-<i>.json par fetch et ne sauvegarde que par POST vers le serveur.
+- Au chargement, le jeu valide les données (validerMonde / chargerMondeDepuisJson, monde-data.js), puis pour chaque objet placé retrouve library[id], appelle build(params), positionne le mesh à (x, z) avec sa rotation. Idem pour les tracés modifiés (pistes dans carte-editeur.js) qui remplacent les points par défaut du circuit choisi.
+- **Le mode procédural ne sert qu'à la génération initiale des fichiers** (monde-procedural.js via npm run mondes) — jamais à l'exécution dans le jeu.
 
 ## Comment le jeu fonctionne (index.html, ~1700 lignes)
 
@@ -106,13 +103,13 @@ boucle de jeu (requestAnimationFrame) → entrées clavier → update → camér
 
 ```
 circuits.js ──────────────┐
-objets.js (library) ──────┼─→ index.html / jeu.html  (monde 3D + course)
-                          ├─→ editeur.html            (édition)
+objets.js (library) ──────┼─→ index.html / jeu.html  (monde 3D + course, jouable en STATIQUE)
+                          ├─→ editeur.html            (édition : serveur local obligatoire)
                           └─→ bibliotheque.html       (visualisation)
 
-editeur.html ── localStorage 'turbo-monde-<i>' ──→ index.html
-    └─ POST /__save-monde → server.js → monde-<i>.json + monde-<i>.js → jeu.html (file://)
-    └─ POST /__save-carte → server.js → carte-editeur.js (tracés) → jeu.html (file://)
+monde-<i>.json + monde-<i>.js + carte-editeur.js ── commités ──→ lus tels quels par le jeu (?circuit=<i>)
+éditeur.html ── POST /__save-monde ──→ server.js ──→ monde-<i>.json + monde-<i>.js (commités ensuite)
+éditeur.html ── POST /__save-carte ──→ server.js ──→ carte-editeur.js (commité ensuite)
 ```
 
-En résumé : **les tracés et le catalogue d'objets vivent dans des fichiers JS partagés**, le code du jeu est dans `index.html`, et l'éditeur écrit **un fichier de données par circuit** (`monde-<i>.json`) que le jeu relit pour le circuit choisi.
+En résumé : **les tracés et le catalogue d'objets vivent dans des fichiers JS partagés**, le code du jeu est dans `index.html`, les données de chaque circuit dans **un fichier JSON commité par circuit** (`monde-<i>.json` + miroir `.js`) que le jeu lit tel quel (statique, `?circuit=<i>`, aucun localStorage), et que seul le serveur local peut modifier via l'éditeur.
