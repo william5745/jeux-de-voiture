@@ -860,11 +860,6 @@ window.addEventListener('resize', () => {
   majCamera();
 });
 
-/* ---------- Démarrage : construire le circuit + charger le monde du jeu ---------- */
-construirePiste(0); // déclenche aussi chargerMondeDuJeu() pour le circuit 0
-construirProps();
-majListe();
-
 // Charge les objets du monde POUR LE CIRCUIT actuellement affiché, depuis LE MÊME
 // fichier commité que celui que lit le jeu : monde-<i>.json, par fetch UNIQUEMENT
 // (édition = serveur local obligatoire ; aucun localStorage, aucune génération procédurale
@@ -891,6 +886,13 @@ async function chargerMondeDuJeu() {
     alert('Impossible de charger monde-' + i + '.json : lance le serveur local (node server.js). Le jeu, lui, se joue en statique avec les fichiers commités.');
   }
 }
+
+/* ---------- Démarrage : construire le circuit + charger le monde du jeu ---------- */
+// EN DERNIER, après toutes les déclarations (let/const) : appelé avant, on obtenait
+// l'erreur TDZ "Cannot access 'chargementRev' before initialization" et la carte restait vide.
+construirePiste(0); // déclenche aussi chargerMondeDuJeu() pour le circuit 0
+construirProps();
+majListe();
 </script>
 </body>
 </html>

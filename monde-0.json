@@ -17,231 +17,297 @@
       "x": 46.89,
       "z": -58.55,
       "rotation": 2.77,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 29.3,
       "z": -79.85,
       "rotation": 98.94,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 24.7,
       "z": -109.09,
       "rotation": 98.94,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 64.3,
       "z": -80.86,
       "rotation": 82.57,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 68.13,
       "z": -110.21,
       "rotation": 82.57,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 98.96,
       "z": -72.6,
       "rotation": 67.8,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 110.15,
       "z": -100,
       "rotation": 67.8,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 124.93,
       "z": -53.9,
       "rotation": 39.97,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 147.62,
       "z": -72.91,
       "rotation": 39.97,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 117.11,
       "z": 42.28,
       "rotation": 17.34,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 145.36,
       "z": 33.45,
       "rotation": 17.34,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 135.65,
       "z": 75.82,
       "rotation": 2.05,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 165.23,
       "z": 74.76,
       "rotation": 2.05,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 121.9,
       "z": 98.43,
       "rotation": -51.96,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 140.14,
       "z": 121.75,
       "rotation": -51.96,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 93.38,
       "z": 104.45,
       "rotation": -104.74,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": 85.85,
       "z": 133.08,
       "rotation": -104.74,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -14.49,
       "z": 117.08,
       "rotation": -93.38,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -16.23,
       "z": 146.63,
       "rotation": -93.38,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -48.96,
       "z": 109.74,
       "rotation": -109.46,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -58.83,
       "z": 137.65,
       "rotation": -109.46,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -79.12,
       "z": 92.76,
       "rotation": -127.6,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -97.18,
       "z": 116.21,
       "rotation": -127.6,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -109.24,
       "z": 69.02,
       "rotation": -132.02,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -129.06,
       "z": 91.01,
       "rotation": -132.02,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -115.71,
       "z": -25.85,
       "rotation": -135.89,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -136.96,
       "z": -5.25,
       "rotation": -135.89,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -124.13,
       "z": -39.38,
       "rotation": 139.16,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -146.53,
       "z": -58.74,
       "rotation": 139.16,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -95.48,
       "z": -52.41,
       "rotation": 109.04,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -105.14,
       "z": -80.39,
       "rotation": 109.04,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -59.06,
       "z": -63.83,
       "rotation": 104.04,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "barrier",
       "x": -66.24,
       "z": -92.55,
       "rotation": 104.04,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "boost",
@@ -278,518 +344,796 @@
       "x": 151.67,
       "z": -50.26,
       "rotation": 0,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "itembox",
       "x": 145.62,
       "z": -47.88,
       "rotation": 0,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "itembox",
       "x": 139.57,
       "z": -45.51,
       "rotation": 0,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "itembox",
       "x": 61.61,
       "z": 115.82,
       "rotation": 0,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "itembox",
       "x": 63.81,
       "z": 109.7,
       "rotation": 0,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "itembox",
       "x": 66.02,
       "z": 103.59,
       "rotation": 0,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "itembox",
       "x": -133.02,
       "z": 44.46,
       "rotation": 0,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "itembox",
       "x": -127.23,
       "z": 47.41,
       "rotation": 0,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "itembox",
       "x": -121.43,
       "z": 50.36,
       "rotation": 0,
-      "params": {}
+      "params": {
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 3.4,
       "z": -68.26,
       "rotation": 286.27,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -4.17,
       "z": -116.68,
       "rotation": 297.97,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 34.65,
       "z": -63.27,
       "rotation": 248.95,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 26.76,
       "z": -116.69,
       "rotation": 317.01,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 57.86,
       "z": -69.3,
       "rotation": 6.41,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 62.94,
       "z": -128.08,
       "rotation": 153.04,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 84.63,
       "z": -69.7,
       "rotation": 108.22,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 96.88,
       "z": -117.15,
       "rotation": 39.85,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 100.78,
       "z": -52.4,
       "rotation": 272.69,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 129.88,
       "z": -97.89,
       "rotation": 252.17,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 117.64,
       "z": -43.36,
       "rotation": 230.97,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 166.35,
       "z": -76.64,
       "rotation": 66.28,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 127.67,
       "z": -28.19,
       "rotation": 307.99,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 176.47,
       "z": -32.61,
       "rotation": 180.2,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 116.52,
       "z": -17.59,
       "rotation": 200.51,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 162.71,
       "z": 10.37,
       "rotation": 15.58,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 103.57,
       "z": 21.99,
       "rotation": 82.76,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 161.97,
       "z": 30.36,
       "rotation": 117.88,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 122.12,
       "z": 66.46,
       "rotation": 204.52,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 162.08,
       "z": 38.1,
       "rotation": 294.47,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 118.65,
       "z": 73.55,
       "rotation": 93.02,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 171.03,
       "z": 86.65,
       "rotation": 128.39,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 116.05,
       "z": 87.4,
       "rotation": 291.09,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 156.32,
       "z": 130.52,
       "rotation": 109.45,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 104.58,
       "z": 98.65,
       "rotation": 63.03,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 111.42,
       "z": 147.17,
       "rotation": 54.26,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 89.01,
       "z": 84.98,
       "rotation": 68.79,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 70.51,
       "z": 135.71,
       "rotation": 292.37,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 53.95,
       "z": 78.92,
       "rotation": 305.94,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 43.62,
       "z": 137,
       "rotation": 255.49,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 4.43,
       "z": 107.2,
       "rotation": 166.15,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 48.29,
       "z": 129.05,
       "rotation": 347.61,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -3.28,
       "z": 99.76,
       "rotation": 147.57,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 1.92,
       "z": 153.51,
       "rotation": 337.44,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -25.5,
       "z": 103.43,
       "rotation": 265.22,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -36.27,
       "z": 161.44,
       "rotation": 48.5,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -51.17,
       "z": 101.19,
       "rotation": 126.52,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -69.84,
       "z": 146.49,
       "rotation": 181.61,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -66.56,
       "z": 80.7,
       "rotation": 134.63,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -98.91,
       "z": 123.94,
       "rotation": 77.3,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -93.46,
       "z": 65.96,
       "rotation": 10.29,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -128.82,
       "z": 113.19,
       "rotation": 11.55,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -107.82,
       "z": 59.18,
       "rotation": 248.92,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -155.04,
       "z": 72.28,
       "rotation": 253.07,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -94.5,
       "z": 55.49,
       "rotation": 289.81,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -138.74,
       "z": 24.54,
       "rotation": 251.54,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -83.27,
       "z": 6.13,
       "rotation": 27.89,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -141.81,
       "z": 13.49,
       "rotation": 293.34,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -110.54,
       "z": -30.87,
       "rotation": 324.35,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -145.72,
       "z": 3.24,
       "rotation": 49.65,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -109.06,
       "z": -31.86,
       "rotation": 21.5,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -160.73,
       "z": -47.54,
       "rotation": 202.53,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -107.3,
       "z": -35.16,
       "rotation": 307.73,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -129.52,
       "z": -89.82,
       "rotation": 193.79,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -81.55,
       "z": -49.65,
       "rotation": 93.27,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -97.8,
       "z": -95.88,
       "rotation": 185.37,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -52.19,
       "z": -47.81,
       "rotation": 66.03,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -64.86,
       "z": -100.3,
       "rotation": 279.33,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -25.2,
       "z": -58.48,
       "rotation": 234.78,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -35.61,
       "z": -116.56,
       "rotation": 218.16,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 0,
       "z": 20,
       "rotation": 0,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 40,
       "z": 60,
       "rotation": 0,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -60,
       "z": 40,
       "rotation": 0,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": 30,
       "z": -30,
       "rotation": 0,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "tree",
       "x": -30,
       "z": -20,
       "rotation": 0,
-      "params": {}
+      "params": {
+        "trunkColor": "#7a4a21",
+        "leafColor": "#2e7d32",
+        "scale": 1
+      }
     },
     {
       "id": "bush",
