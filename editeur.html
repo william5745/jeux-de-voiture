@@ -127,7 +127,7 @@
       <button id="btn-import">📂 Importer un JSON</button>
       <button id="btn-clear">🗑️ Tout effacer</button>
     </div>
-    <p class="vide">Sauvegarde automatique en données : <b>un fichier par circuit</b> — <b>monde-&lt;circuit&gt;.json</b> (+ miroir monde-&lt;circuit&gt;.js). Le jeu <b>jeu.html</b> (ouvert en file://) et index.html lisent celui du circuit choisi au chargement — fais juste Ctrl+F5 dessus après tes modifs. La piste affichée est en lecture seule.</p>
+    <p class="vide">Édition <b>avec serveur local obligatoire</b> (<code>node server.js</code>) : sauvegarde automatique en données par <b>POST /__save-monde</b> → <b>monde-&lt;circuit&gt;.json</b> commité (+ miroir monde-&lt;circuit&gt;.js). Le jeu (index.html / jeu.html) lit ensuite ce fichier commité tel quel — jouable en statique, même sans serveur (Ctrl+F5 après tes modifs). Chargement du monde : <b>fetch('monde-&lt;circuit&gt;.json')</b> uniquement. La piste affichée est en lecture seule.</p>
     <input type="file" id="file-import" accept=".json,application/json" style="display:none">
     <h2>📍 Objets placés (<span id="count">0</span>)</h2>
     <div id="suppr-types"></div>
@@ -169,7 +169,7 @@
 import * as THREE from 'three';
 import { library } from './objets.js';
 import { CIRCUITS } from './circuits.js';
-import { ROAD_HALF, SAMPLES, genererMonde } from './monde-procedural.js';
+import { ROAD_HALF, SAMPLES } from './monde-procedural.js';
 import { validerMonde, chargerMondeDepuisJson } from './monde-data.js';
 
 const viewer = document.getElementById('viewer');
@@ -765,23 +765,24 @@ function exporterDonnees() {
 }
 
 function sauvegarder() {
-  const data = exporterDonnees();
-  // Un fichier de données PAR CIRCUIT : localStorage 'turbo-monde-<i>' + monde-<i>.json côté serveur
-  try { localStorage.setItem('turbo-monde-' + indexPiste, JSON.stringify(data)); } catch (e) { /* stockage indisponible */ }
-  pousserVersJeu(data);
+  // Un fichier de données PAR CIRCUIT, écrit UNIQUEMENT par le serveur local (POST) :
+  // aucun localStorage — le fichier monde-<i>.json commité est la seule source de vérité.
+  pousserVersJeu(exporterDonnees());
 }
 
-// Pousse le monde en données vers le jeu : le serveur écrit monde-<circuit>.json
-// + le miroir monde-<circuit>.js, lus au chargement par index.html et jeu.html
-// (même ouvert en file://) pour le circuit correspondant uniquement.
+// Pousse le monde en données vers le serveur : il écrit monde-<circuit>.json
+// + le miroir monde-<circuit>.js (commité), lus au chargement par index.html et jeu.html.
+// Édition = serveur local obligatoire : sans serveur (node server.js), rien n'est sauvé.
 function pousserVersJeu(data) {
-  try {
-    fetch('/__save-monde', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }).catch(() => {});
-  } catch (e) { /* le serveur local est peut-être arrêté : localStorage suffit */ }
+  fetch('/__save-monde', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(r => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+  }).catch(() => {
+    alert('Sauvegarde impossible : lance le serveur local (node server.js) — l\'éditeur écrit uniquement monde-' + indexPiste + '.json via POST /__save-monde.');
+  });
 }
 
 function chargerDonnees(data) {
@@ -865,62 +866,29 @@ construirProps();
 majListe();
 
 // Charge les objets du monde POUR LE CIRCUIT actuellement affiché, depuis LE MÊME
-// fichier que celui que lit le jeu :
-// 1) monde-<i>.json (fetch + validation via monde-data.js) 2) localStorage 'turbo-monde-<i>'
-// 3) migration de l'ancien format global (monde.json / turbo-monde) si le circuit correspond.
-// Si aucune donnée n'existe : on régénère la génération procédurale initiale (module
-// partagé avec le jeu) et on la sauvegarde — un fichier circuit n'est jamais vide.
+// fichier commité que celui que lit le jeu : monde-<i>.json, par fetch UNIQUEMENT
+// (édition = serveur local obligatoire ; aucun localStorage, aucune génération procédurale
+// à l'exécution — le procédural ne sert qu'à générer les fichiers via npm run mondes).
 let chargementRev = 0;
 async function chargerMondeDuJeu() {
   const rev = ++chargementRev; // ignore les réponses arrivées après un changement de circuit
   const i = indexPiste;
   let data = null;
-  // 1) le fichier de données du circuit — même fichier que le jeu (source de vérité)
   try {
     const r = await fetch('monde-' + i + '.json');
     if (r.ok) data = chargerMondeDepuisJson(await r.text(), i, { autoriserVide: true });
-  } catch (e) { /* fichier absent/illisible : secours ci-dessous */ }
-  if (rev !== chargementRev) return;
-  // 2) localStorage par circuit
-  if (!data || !Array.isArray(data.objets) || !data.objets.length) {
-    try {
-      const m = JSON.parse(localStorage.getItem('turbo-monde-' + i) || 'null');
-      const v = validerMonde(m, i, { autoriserVide: true });
-      if (v.ok && v.monde.objets.length) data = v.monde;
-    } catch (e) {}
-  }
-  if (rev !== chargementRev) return;
-  // 3) Migration : ancien format global (un seul monde pour tous les circuits)
-  if (!data || !Array.isArray(data.objets) || !data.objets.length) {
-    try {
-      const r = await fetch('monde.json');
-      if (r.ok) {
-        const ancien = chargerMondeDepuisJson(await r.text(), i, { autoriserVide: true });
-        if (ancien && Array.isArray(ancien.objets) && ancien.objets.length) data = ancien;
-      }
-    } catch (e) {}
-  }
-  if (!data || !Array.isArray(data.objets) || !data.objets.length) {
-    try {
-      const m = JSON.parse(localStorage.getItem('turbo-monde') || 'null');
-      const v = validerMonde(m, i, { autoriserVide: true });
-      if (v.ok && v.monde.objets.length) data = v.monde;
-    } catch (e) {}
-  }
-  if (!data || !Array.isArray(data.objets) || !data.objets.length) {
-    try {
-      const c = JSON.parse(localStorage.getItem('turbo-circuit-carte') || 'null');
-      const v = validerMonde({ version: 1, circuit: i, objets: c && c.objets }, i, { autoriserVide: true });
-      if (v.ok && v.monde.objets.length) data = v.monde;
-    } catch (e) {}
-  }
+  } catch (e) { /* fichier illisible : géré ci-dessous */ }
   if (rev !== chargementRev) return;
   if (data && Array.isArray(data.objets) && data.objets.length) {
     chargerDonnees(data);
   } else {
-    // Aucune donnée pour ce circuit : génération procédurale initiale (déterministe,
-    // module partagé avec le jeu) puis sauvegarde → le fichier monde-<i>.json est créé/rempli.
-    chargerDonnees(genererMonde(i, CIRCUITS[i].points));
+    // Fichier absent/invalide ou serveur arrêté : l'éditeur ne peut ni charger ni sauver.
+    places.forEach(p => scene.remove(p.mesh));
+    places = [];
+    selectionner(null);
+    majListe();
+    console.error('monde-' + i + '.json introuvable/invalide — lance node server.js pour éditer.');
+    alert('Impossible de charger monde-' + i + '.json : lance le serveur local (node server.js). Le jeu, lui, se joue en statique avec les fichiers commités.');
   }
 }
 </script>

@@ -36,13 +36,13 @@
   #menu.hidden { display: none; }
 </style>
 <script>
-  // Données du monde : UN FICHIER PAR CIRCUIT — monde-<i>.json (source de vérité, lu par
-  // fetch dans le module) + monde-<i>.js (miroir file://, injecté ici dans le <head>).
-  // Le circuit choisi est connu dès le <head> via localStorage('turboCircuit') :
-  // on injecte dynamiquement la bonne balise <script> (chargée avant le module).
+  // Données du monde : UN FICHIER PAR CIRCUIT, commité — monde-<i>.json (lu par fetch dans
+  // le module) + monde-<i>.js (miroir, injecté ici dans le <head> : marche même en file://).
+  // Le circuit choisi vient du paramètre d'URL ?circuit=<i> (AUCUN localStorage : le jeu
+  // doit rester jouable en statique) : on injecte la bonne balise <script> avant le module.
   (function () {
     var i = 0;
-    try { i = parseInt(localStorage.getItem('turboCircuit') || '0'); } catch (e) {}
+    try { i = parseInt(new URLSearchParams(location.search).get('circuit') || '0'); } catch (e) {}
     if (isNaN(i) || i < 0) i = 0;
     document.write('<script src="./monde-' + i + '.js"><\/script>');
   })();
@@ -81,14 +81,13 @@
     <button data-level="2">🤖 Niveau 2 — Difficile</button>
   </div>
   <p>(touches 1-4 = circuit • F = facile • D = difficile)</p>
-  <p><button id="btn-nouveau-monde" style="font-size:14px;padding:8px 16px;cursor:pointer;">🔄 Nouveau monde (régénérer le décor procédural)</button></p>
 </div>
 
 <script type="module">
 import * as THREE from 'three';
 import { library } from './objets.js';
 import { CIRCUITS } from './circuits.js';
-import { SAMPLES, ROAD_HALF, genererMonde } from './monde-procedural.js';
+import { SAMPLES, ROAD_HALF } from './monde-procedural.js';
 import { validerMonde, chargerMondeDepuisJson } from './monde-data.js';
 
 /* ============================= SCÈNE ============================= */
@@ -166,14 +165,14 @@ scene.add(sun);
 /* ============================= CIRCUIT ============================= */
 // Plusieurs circuits au choix (boucles fermées)
 
-// Circuit choisi (stocké en localStorage, 0 par défaut)
-const circuitIndex = Math.max(0, Math.min(CIRCUITS.length - 1, parseInt(localStorage.getItem('turboCircuit') || '0')));
-// Tracé éventuellement modifié dans l'éditeur de carte (editeur.html)
-// Priorité au fichier carte-editeur.js (partagé avec jeu.html ouvert en file://), sinon localStorage.
+// Circuit choisi via le paramètre d'URL ?circuit=<i> (0 par défaut) — jouable en statique,
+// aucun localStorage. Le <head> injecte le miroir monde-<i>.js correspondant.
+const circuitIndex = Math.max(0, Math.min(CIRCUITS.length - 1, parseInt(new URLSearchParams(location.search).get('circuit') || '0')));
+// Tracé éventuellement modifié dans l'éditeur (fichier commité carte-editeur.js,
+// lu aussi par jeu.html ouvert en file://)
 try {
   const pistesFichier = window.__CARTE_EDITEUR__ && window.__CARTE_EDITEUR__.pistes;
-  const pistesModifiees = pistesFichier || JSON.parse(localStorage.getItem('turbo-circuit-pistes') || '{}');
-  const modif = pistesModifiees[circuitIndex];
+  const modif = pistesFichier && pistesFichier[circuitIndex];
   if (Array.isArray(modif) && modif.length >= 3) CIRCUITS[circuitIndex].points = modif;
 } catch (e) { /* tracé par défaut */ }
 const trackPoints = CIRCUITS[circuitIndex].points.map(([x, z]) => new THREE.Vector3(x, 0, z));
@@ -196,17 +195,16 @@ function nearestOnTrack(pos) {
 }
 
 /* ================= MONDE EN DONNÉES =================
-   Couche statique (non éditable) : piste, bords, barrière invisible.
-   Couche dynamique (éditable via editeur.html) : tous les objets placés,
-   sérialisés dans UN FICHIER PAR CIRCUIT : monde-<circuitIndex>.json à côté
-   du jeu (miroir monde-<circuitIndex>.js chargé dans le <head> pour file://).
-   Le jeu LIT ce fichier pour le circuit choisi ; si aucune donnée valide n'existe,
-   on génère le monde procédural initial UNE FOIS (genererMonde, déterministe) et on
-   l'exporte dans ce fichier — qui ne reste donc jamais vide. */
-const monde = { version: 1, circuit: circuitIndex, objets: [] };
+   Le jeu est JOUABLE EN STATIQUE (hébergement GitHub Pages / file:// pour jeu.html) :
+   il lit UNIQUEMENT les fichiers commités du circuit choisi — aucune écriture, aucun
+   localStorage, aucune génération procédurale à l'exécution (celle-ci ne sert qu'à
+   produire les fichiers : npm run mondes, voir agent.md règle 10) :
+   1) monde-<circuitIndex>.json (fetch relatif, servi statiquement, validé),
+   2) miroir monde-<circuitIndex>.js (commité, injecté dans le <head> — marche en file://).
+   Toute modification de ces fichiers passe par le serveur local (editeur.html → POST). */
 
-// Pose un objet de la bibliothèque et l'enregistre dans les données du monde
-function poser(id, x, z, rotationDeg, params, enregistrer = true) {
+// Pose un objet de la bibliothèque (lecture seule : le jeu ne modifie jamais les données)
+function poser(id, x, z, rotationDeg, params) {
   const def = library[id];
   if (!def) return null;
   const p = Object.assign({}, def.params, params || {});
@@ -215,65 +213,28 @@ function poser(id, x, z, rotationDeg, params, enregistrer = true) {
   mesh.position.set(x, 0, z);
   mesh.rotation.y = (rotationDeg || 0) * Math.PI / 180;
   scene.add(mesh);
-  if (enregistrer) monde.objets.push({ id, x, z, rotation: rotationDeg || 0, params: p });
   return mesh;
 }
 
-// Charge les données du monde DU CIRCUIT CHOISI — le même fichier que celui de l'éditeur :
-// 1) fetch du fichier monde-<circuit>.json (source de vérité, validé par monde-data.js),
-// 2) miroir monde-<circuit>.js injecté dans le <head> (file:// via jeu.html),
-// 3) localStorage par circuit, 4) anciens formats globaux (rétrocompatibilité).
-// Retourne { monde, source } — monde vaut null si aucune donnée valide trouvée.
+// Charge les données du monde DU CIRCUIT CHOISI depuis les fichiers commités
 async function chargerMonde() {
+  // 1) le fichier monde-<circuit>.json (source de vérité) — servi en statique
   try {
     const r = await fetch('./monde-' + circuitIndex + '.json');
-    if (r.ok) return { monde: chargerMondeDepuisJson(await r.text(), circuitIndex), source: 'json' };
-  } catch (e) { /* file:// ou serveur arrêté : on passe aux secours */ }
+    if (r.ok) return chargerMondeDepuisJson(await r.text(), circuitIndex);
+  } catch (e) { /* file:// : on passe au miroir <script> ci-dessous */ }
+  // 2) le miroir monde-<circuit>.js commité, injecté dans le <head>
   if (window.__MONDE__) {
     const v = validerMonde(window.__MONDE__, circuitIndex, { autoriserVide: true });
-    if (v.ok && v.monde.objets.length) return { monde: v.monde, source: 'miroir' };
+    if (v.ok && v.monde.objets.length) return v.monde;
   }
-  try {
-    const m = JSON.parse(localStorage.getItem('turbo-monde-' + circuitIndex) || 'null');
-    const v = validerMonde(m, circuitIndex, { autoriserVide: true });
-    if (v.ok && v.monde.objets.length) return { monde: v.monde, source: 'local' };
-  } catch (e) {}
-  // Rétrocompatibilité : ancien stockage global
-  try {
-    const m = JSON.parse(localStorage.getItem('turbo-monde') || 'null');
-    const v = validerMonde(m, circuitIndex, { autoriserVide: true });
-    if (v.ok && v.monde.objets.length) return { monde: v.monde, source: 'local' };
-  } catch (e) {}
-  // Rétrocompatibilité avec l'ancien format de l'éditeur
-  if (window.__CARTE_EDITEUR__ && window.__CARTE_EDITEUR__.carte && Array.isArray(window.__CARTE_EDITEUR__.carte.objets)) {
-    const v = validerMonde({ version: 1, circuit: circuitIndex, objets: window.__CARTE_EDITEUR__.carte.objets }, circuitIndex, { autoriserVide: true });
-    if (v.ok && v.monde.objets.length) return { monde: v.monde, source: 'local' };
-  }
-  try {
-    const c = JSON.parse(localStorage.getItem('turbo-circuit-carte') || 'null');
-    const v = validerMonde({ version: 1, circuit: circuitIndex, objets: c && c.objets }, circuitIndex, { autoriserVide: true });
-    if (v.ok && v.monde.objets.length) return { monde: v.monde, source: 'local' };
-  } catch (e) {}
-  return { monde: null, source: null };
+  return null;
 }
 
-const chargeMonde = await chargerMonde();
-// Le monde affiché vient TOUJOURS des données : le fichier monde-<circuit>.json,
-// ou à défaut la génération procédurale initiale (déterministe, module partagé).
-const dataMonde = chargeMonde.monde || genererMonde(circuitIndex, CIRCUITS[circuitIndex].points);
-monde.objets = dataMonde.objets;
-if (chargeMonde.source !== 'json') sauvegarderMonde(); // exporte pour que le fichier existe et soit à jour
-
-// Exporte le monde (objets) en données : localStorage par circuit + monde-<circuit>.json via le serveur
-function sauvegarderMonde() {
-  try { localStorage.setItem('turbo-monde-' + circuitIndex, JSON.stringify(monde)); } catch (e) {}
-  try {
-    fetch('/__save-monde', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(monde)
-    }).catch(() => {});
-  } catch (e) { /* file:// : localStorage suffit */ }
+const dataMonde = await chargerMonde();
+if (!dataMonde) {
+  throw new Error('Données du circuit ' + circuitIndex + ' introuvables : monde-' + circuitIndex +
+    '.json / monde-' + circuitIndex + '.js absents ou invalides (fichiers commités requis pour jouer en statique).');
 }
 
 // Route : ruban triangulé le long de la courbe
@@ -804,7 +765,7 @@ function addTree(x, z) {
 {
   let places = 0;
   dataMonde.objets.forEach(o => {
-    const mesh = poser(o.id, +o.x || 0, +o.z || 0, +o.rotation || 0, o.params || {}, false);
+    const mesh = poser(o.id, +o.x || 0, +o.z || 0, +o.rotation || 0, o.params || {});
     if (!mesh) return;
     if (o.id === 'itembox') { mesh.position.y = 1.6; itemBoxes.push({ mesh, taken: false, respawn: 0 }); }
     if (o.id === 'boost') boostPads.push({ index: nearestOnTrack(mesh.position).index, mesh, cooldown: 0 });
@@ -1450,24 +1411,12 @@ CIRCUITS.forEach((c, i) => {
   btn.dataset.circuit = i;
   if (i === circuitIndex) btn.style.background = 'rgba(46, 204, 113, .9)';
   btn.addEventListener('click', () => {
-    localStorage.setItem('turboCircuit', i);
-    location.reload();
+    // sélection du circuit via l'URL (?circuit=<i>) — jouable en statique, sans localStorage
+    const u = new URL(location.href);
+    u.searchParams.set('circuit', i);
+    location.href = u.toString();
   });
   circuitBtnsEl.appendChild(btn);
-});
-
-// "Nouveau monde" : régénère la génération procédurale initiale du circuit choisi
-// (déterministe, via le module partagé monde-procedural.js), l'exporte dans
-// monde-<circuit>.json + miroir .js, puis recharge la page.
-document.getElementById('btn-nouveau-monde').addEventListener('click', () => {
-  if (!confirm('Régénérer le monde procédural initial de ce circuit ? Les données de monde-<circuit>.json seront remplacées.')) return;
-  localStorage.removeItem('turbo-monde-' + circuitIndex);
-  localStorage.removeItem('turbo-monde');
-  localStorage.removeItem('turbo-circuit-carte');
-  localStorage.removeItem('turbo-circuit-pistes');
-  monde.objets = genererMonde(circuitIndex, CIRCUITS[circuitIndex].points).objets;
-  sauvegarderMonde(); // localStorage + POST /__save-monde → monde-<circuit>.json + monde-<circuit>.js
-  setTimeout(() => location.reload(), 300);
 });
 
 function startRace(level) {
@@ -1523,8 +1472,9 @@ window.addEventListener('keydown', e => {
     if (k >= '1' && k <= '4') {
       const idx = Number(k) - 1;
       if (idx < CIRCUITS.length && idx !== circuitIndex) {
-        localStorage.setItem('turboCircuit', idx);
-        location.reload();
+        const u = new URL(location.href);
+        u.searchParams.set('circuit', idx);
+        location.href = u.toString();
       }
     }
     if (k === 'f') startRace(1);
